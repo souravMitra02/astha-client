@@ -16,7 +16,8 @@ const ServiceDetails = () => {
   const { id } = useParams();
 
   const [service, setService] = useState(null);
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [showRequestForm, setShowRequestForm] = useState(false);
 
   useEffect(() => {
     const loadService = async () => {
@@ -125,14 +126,15 @@ const ServiceDetails = () => {
           </div>
 
           <button
-            type="button"
+                      type="button"
+                      onClick={() => setShowRequestForm(true)}
             className="mt-8 w-full rounded-xl bg-primary px-5 py-3.5 font-bengali font-semibold text-surface transition hover:bg-primary-hover"
           >
             সেবা নিন
-          </button>
+                  </button>
         </div>
 
-        <RequestForm service={service} />
+       {showRequestForm && <RequestForm service={service} />}
       </div>
     </main>
   );
