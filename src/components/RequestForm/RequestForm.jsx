@@ -1,15 +1,29 @@
 import { useForm } from "react-hook-form";
-
+import { createRequest } from "../../services/requestService";
+import Swal from "sweetalert2";
 const RequestForm = ({ service }) => {
   const {
     register,
-    handleSubmit,
+      handleSubmit,
+    reset,
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
-    console.log(data);
-  };
+    const onSubmit = async (data) => {
+  try {
+    const response = await createRequest(service._id, data.message);
+
+    await Swal.fire({
+      icon: "success",
+      title: "অনুরোধ সফল হয়েছে",
+      text: response.message,
+      confirmButtonText: "ঠিক আছে",
+    });
+      reset();
+  } catch (error) {
+    console.error("Create request error:", error);
+  }
+};
 
   return (
     <div className="mt-8 rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">

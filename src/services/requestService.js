@@ -41,3 +41,22 @@ export const updateRequestStatus = async (requestId, status) => {
 
   return response.data;
 };
+
+export const createRequest = async (serviceId, message) => {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.post(
+    API_URL,
+    {
+      serviceId,
+      message,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+};
