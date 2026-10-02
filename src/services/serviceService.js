@@ -13,3 +13,19 @@ export const getSingleService = async (id) => {
 
   return response.data;
 };
+
+export const findAvailableServices = async (
+  category,
+  latitude,
+  longitude
+) => {
+  const response = await axios.get(`${API_URL}/available`, {
+    params: {
+      category,
+      latitude,
+      longitude,
+    },
+  });
+
+  return response.data;
+};

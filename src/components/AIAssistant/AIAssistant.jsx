@@ -1,6 +1,7 @@
 import { useState } from "react";
 import useAuth from "../../hooks/useAuth";
 import { askAI } from "../../services/aiService";
+import { findAvailableServices } from "../../services/serviceService";
 
 const categoryLabels = {
   electrician: "ইলেকট্রিক্যাল",
@@ -69,14 +70,26 @@ const AIAssistant = () => {
     try {
       const response = await askAI(userMessage);
 
+      const category = response.result.category;
+
       setMessages((prev) => [
         ...prev,
         {
           type: "ai",
           text: response.result.problem,
-          category: response.result.category,
+          category,
         },
       ]);
+
+      if (location && category !== "unknown") {
+        const providerResponse = await findAvailableServices(
+          category,
+          location.latitude,
+          location.longitude
+        );
+
+        console.log("Available providers:", providerResponse.providers);
+      }
     } catch (error) {
       console.error("AI error:", error);
     }
