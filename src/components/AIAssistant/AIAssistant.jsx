@@ -100,12 +100,12 @@ const AIAssistant = () => {
     console.error("AI error:", error);
 
     setMessages((prev) => [
-      ...prev,
-      {
-        type: "ai",
-        text: "দুঃখিত, এই মুহূর্তে আপনার অনুরোধটি প্রক্রিয়া করা যাচ্ছে না।",
-      },
-    ]);
+  ...prev,
+  {
+    type: "ai",
+    text: "দুঃখিত, এই মুহূর্তে আস্থা AI সেবাটি ব্যবহার করা যাচ্ছে না। একটু পরে আবার চেষ্টা করুন।",
+  },
+]);
   } finally {
     setIsLoading(false);
   }
