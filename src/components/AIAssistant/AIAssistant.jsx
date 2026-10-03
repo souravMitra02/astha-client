@@ -2,6 +2,8 @@ import { useState } from "react";
 import useAuth from "../../hooks/useAuth";
 import { askAI } from "../../services/aiService";
 import { findAvailableServices } from "../../services/serviceService";
+import { createRequest } from "../../services/requestService";
+import Swal from "sweetalert2";
 
 const categoryLabels = {
   electrician: "ইলেকট্রিক্যাল",
@@ -16,7 +18,10 @@ const AIAssistant = () => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [location, setLocation] = useState(null);
-
+  const [providers, setProviders] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [requestedProviders, setRequestedProviders] = useState([]);
+  
   const { user } = useAuth();
 
   const hour = new Date().getHours();
@@ -53,47 +58,87 @@ const AIAssistant = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim()) return;
+  if (!message.trim()) return;
 
-    const userMessage = message;
+  const userMessage = message;
+
+  setMessages((prev) => [
+    ...prev,
+    {
+      type: "user",
+      text: userMessage,
+    },
+  ]);
+
+  setMessage("");
+  setIsLoading(true);
+
+  try {
+    const response = await askAI(userMessage);
+
+    const category = response.result.category;
 
     setMessages((prev) => [
       ...prev,
       {
-        type: "user",
-        text: userMessage,
+        type: "ai",
+        text: response.result.problem,
+        category,
       },
     ]);
 
-    setMessage("");
+    if (location && category !== "unknown") {
+      const providerResponse = await findAvailableServices(
+        category,
+        location.latitude,
+        location.longitude
+      );
 
-    try {
-      const response = await askAI(userMessage);
-
-      const category = response.result.category;
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          type: "ai",
-          text: response.result.problem,
-          category,
-        },
-      ]);
-
-      if (location && category !== "unknown") {
-        const providerResponse = await findAvailableServices(
-          category,
-          location.latitude,
-          location.longitude
-        );
-
-        console.log("Available providers:", providerResponse.providers);
-      }
-    } catch (error) {
-      console.error("AI error:", error);
+      setProviders(providerResponse.providers);
     }
-  };
+  } catch (error) {
+    console.error("AI error:", error);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        type: "ai",
+        text: "দুঃখিত, এই মুহূর্তে আপনার অনুরোধটি প্রক্রিয়া করা যাচ্ছে না।",
+      },
+    ]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  const handleRequest = async (provider) => {
+  try {
+    const response = await createRequest(
+      provider._id,
+      messages.find((item) => item.type === "user")?.text || ""
+    );
+
+    setRequestedProviders((prev) => [...prev, provider._id]);
+
+    await Swal.fire({
+      icon: "success",
+      title: "অনুরোধ সফল হয়েছে",
+      text: response.message,
+      confirmButtonText: "ঠিক আছে",
+    });
+  } catch (error) {
+    console.error("Create request error:", error);
+
+    Swal.fire({
+      icon: "error",
+      title: "অনুরোধ ব্যর্থ হয়েছে",
+      text:
+        error.response?.data?.message ||
+        "অনুরোধ পাঠাতে সমস্যা হয়েছে",
+      confirmButtonText: "ঠিক আছে",
+    });
+  }
+};
 
   return (
     <>
@@ -116,25 +161,88 @@ const AIAssistant = () => {
               আমি আস্হা AI। কীভাবে সাহায্য করতে পারি?
             </p>
 
-            {messages.map((item, index) => (
-              <div
-                key={index}
-                className={`mt-3 rounded-xl p-3 font-bengali text-sm ${
-                  item.type === "user"
-                    ? "ml-8 bg-primary text-surface"
-                    : "mr-8 bg-background text-text"
-                }`}
-              >
-                {item.text}
+           {messages.map((item, index) => (
+  <div
+    key={index}
+    className={`mt-3 rounded-xl p-3 font-bengali text-sm ${
+      item.type === "user"
+        ? "ml-8 bg-primary text-surface"
+        : "mr-8 bg-background text-text"
+    }`}
+  >
+    {item.text}
 
-                {item.type === "ai" && item.category && (
-                  <p className="mt-2 text-xs text-text-muted">
-                    সেবার ধরন:{" "}
-                    {categoryLabels[item.category] || item.category}
-                  </p>
-                )}
-              </div>
-            ))}
+    {item.type === "ai" && item.category && (
+      <p className="mt-2 text-xs text-text-muted">
+        সেবার ধরন:{" "}
+        {categoryLabels[item.category] || item.category}
+      </p>
+    )}
+  </div>
+))}
+
+{isLoading && (
+  <div className="mt-3 mr-8 rounded-xl bg-background p-3 font-bengali text-sm text-text-muted">
+    আস্থা AI আপনার অনুরোধটি বিশ্লেষণ করছে...
+  </div>
+)}
+
+           {providers.length > 0 ? (
+  <div className="mt-4 space-y-3">
+    <p className="font-bengali text-sm font-semibold text-text">
+      আপনার জন্য কাছাকাছি সেবা পাওয়া গেছে:
+    </p>
+
+    {providers.map((provider) => (
+      <div
+        key={provider._id}
+        className="rounded-xl border border-border bg-surface p-4"
+      >
+        <h4 className="font-heading font-bold text-text">
+          {provider.title}
+        </h4>
+
+        <p className="mt-1 font-bengali text-sm text-text-muted">
+          সেবাদাতা: {provider.provider.name}
+        </p>
+
+        <div className="mt-2 flex items-center justify-between">
+          <span className="font-bengali text-sm text-text-muted">
+            {provider.distance.toFixed(1)} km দূরে
+          </span>
+
+          <span className="font-heading font-bold text-primary">
+            ৳{provider.price}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => handleRequest(provider)}
+          disabled={requestedProviders.includes(provider._id)}
+          className={`mt-3 w-full rounded-lg px-4 py-2.5 font-bengali text-sm font-semibold text-surface transition ${
+            requestedProviders.includes(provider._id)
+              ? "cursor-not-allowed bg-success"
+              : "bg-primary hover:bg-primary-hover"
+          }`}
+        >
+          {requestedProviders.includes(provider._id)
+            ? "অনুরোধ পাঠানো হয়েছে ✓"
+            : "সেবা নিন"}
+        </button>
+      </div>
+    ))}
+  </div>
+) : (
+  location && (
+    <div className="mt-4 rounded-xl border border-border bg-background p-4">
+      <p className="font-bengali text-sm leading-6 text-text-muted">
+        দুঃখিত, এই মুহূর্তে আপনার কাছাকাছি কোনো সেবাদাতা পাওয়া যায়নি।
+        কিছুক্ষণ পরে আবার চেষ্টা করুন।
+      </p>
+    </div>
+  )
+)}
 
             <button
               type="button"
