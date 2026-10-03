@@ -54,9 +54,17 @@ const AIAssistant = () => {
           longitude,
         });
       },
-      (error) => {
-        console.error("Location error:", error);
-      }
+     (error) => {
+  console.error("Location error:", error);
+
+  setMessages((prev) => [
+    ...prev,
+    {
+      type: "ai",
+      text: "আপনার অবস্থান পাওয়া যাচ্ছে না। কাছাকাছি সেবাদাতা খুঁজতে দয়া করে location permission দিন।",
+    },
+  ]);
+}
     );
   };
 
