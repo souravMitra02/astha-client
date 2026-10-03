@@ -76,74 +76,78 @@ const AIAssistant = () => {
 };
 
   const handleSendMessage = async () => {
-    if (!message.trim()) return;
+  if (!message.trim()) return;
 
-    const userMessage = message;
+  const userMessage = message;
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        type: "user",
-        text: userMessage,
-      },
-    ]);
+  setProviders([]);
+  setHasSearchedProviders(false);
+  setRequestMessage("");
 
-    setMessage("");
-    setIsLoading(true);
+  setMessages((prev) => [
+    ...prev,
+    {
+      type: "user",
+      text: userMessage,
+    },
+  ]);
 
-    try {
-      const response = await askAI(userMessage);
+  setMessage("");
+  setIsLoading(true);
 
-      const category = response.result.category;
-      console.log("AI category:", category);
+  try {
+    const response = await askAI(userMessage);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          type: "ai",
-          text: response.result.problem,
-          category,
-        },
-      ]);
+    const category = response.result.category;
+    console.log("AI category:", category);
 
-      if (category !== "unknown") {
-  if (!location) {
     setMessages((prev) => [
       ...prev,
       {
         type: "ai",
-        text: "কাছাকাছি সেবাদাতা খুঁজতে আগে আপনার অবস্থান নির্বাচন করুন।",
+        text: response.result.problem,
+        category,
       },
     ]);
 
-    return;
-  }
+    if (category !== "unknown") {
+      if (!location) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: "ai",
+            text: "কাছাকাছি সেবাদাতা খুঁজতে আগে আপনার অবস্থান নির্বাচন করুন।",
+          },
+        ]);
 
-  const providerResponse = await findAvailableServices(
-    category,
-    location.latitude,
-    location.longitude
-  );
+        return;
+      }
 
-  setRequestMessage(userMessage);
-  setHasSearchedProviders(true);
-  setProviders(providerResponse.providers);
-}
-    } catch (error) {
-      console.error("AI error:", error);
+      const providerResponse = await findAvailableServices(
+        category,
+        location.latitude,
+        location.longitude
+      );
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          type: "ai",
-          text:
-            "দুঃখিত, এই মুহূর্তে আস্থা AI সেবাটি ব্যবহার করা যাচ্ছে না। একটু পরে আবার চেষ্টা করুন।",
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
+      setRequestMessage(userMessage);
+      setHasSearchedProviders(true);
+      setProviders(providerResponse.providers);
     }
-  };
+  } catch (error) {
+    console.error("AI error:", error);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        type: "ai",
+        text:
+          "দুঃখিত, এই মুহূর্তে আস্থা AI সেবাটি ব্যবহার করা যাচ্ছে না। একটু পরে আবার চেষ্টা করুন।",
+      },
+    ]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleRequest = async (provider) => {
     try {
