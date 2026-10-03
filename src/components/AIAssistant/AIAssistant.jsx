@@ -23,6 +23,7 @@ const AIAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
   const [requestedProviders, setRequestedProviders] = useState([]);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [hasSearchedProviders, setHasSearchedProviders] = useState(false);
 
   const { user } = useAuth();
@@ -40,33 +41,39 @@ const AIAssistant = () => {
   }
 
   const getUserLocation = () => {
-    if (!navigator.geolocation) {
-      console.log("Geolocation is not supported");
-      return;
-    }
+  if (!navigator.geolocation) {
+    console.log("Geolocation is not supported");
+    return;
+  }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
+  setIsGettingLocation(true);
 
-        setLocation({
-          latitude,
-          longitude,
-        });
-      },
-     (error) => {
-  console.error("Location error:", error);
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
 
-  setMessages((prev) => [
-    ...prev,
-    {
-      type: "ai",
-      text: "আপনার অবস্থান পাওয়া যাচ্ছে না। কাছাকাছি সেবাদাতা খুঁজতে দয়া করে location permission দিন।",
+      setLocation({
+        latitude,
+        longitude,
+      });
+
+      setIsGettingLocation(false);
     },
-  ]);
-}
-    );
-  };
+    (error) => {
+      console.error("Location error:", error);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: "ai",
+          text: "আপনার অবস্থান পাওয়া যাচ্ছে না। কাছাকাছি সেবাদাতা খুঁজতে দয়া করে location permission দিন।",
+        },
+      ]);
+
+      setIsGettingLocation(false);
+    }
+  );
+};
 
   const handleSendMessage = async () => {
     if (!message.trim()) return;
@@ -276,11 +283,12 @@ const AIAssistant = () => {
   <div className="relative min-w-0 flex-1">
     <button
       type="button"
-      onClick={getUserLocation}
+                onClick={getUserLocation}
+                disabled={isGettingLocation}
       title="কাছাকাছি সেবাদাতা খুঁজুন"
       className="absolute left-3 top-1/2 z-10 -translate-y-1/2 text-text-muted transition hover:text-primary"
     >
-      <MapPin className="h-4 w-4" />
+     {isGettingLocation ? "..." : <MapPin className="h-4 w-4" />}
     </button>
 
     <input
