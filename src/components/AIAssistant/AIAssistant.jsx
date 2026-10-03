@@ -216,10 +216,10 @@ const AIAssistant = () => {
             ))}
 
             {isLoading && (
-              <div className="mt-3 mr-8 rounded-xl bg-background p-3 font-bengali text-sm text-text-muted">
-                আস্থা AI আপনার অনুরোধটি বিশ্লেষণ করছে...
-              </div>
-            )}
+  <div className="mt-3 mr-8 rounded-xl bg-background p-3 font-bengali text-sm text-text-muted">
+    ...
+  </div>
+)}
 
             {providers.length > 0 ? (
               <div className="mt-4 space-y-3">
