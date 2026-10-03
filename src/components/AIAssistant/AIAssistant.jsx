@@ -4,6 +4,7 @@ import { askAI } from "../../services/aiService";
 import { findAvailableServices } from "../../services/serviceService";
 import { createRequest } from "../../services/requestService";
 import Swal from "sweetalert2";
+import { MapPin } from "lucide-react";
 
 const categoryLabels = {
   electrician: "ইলেকট্রিক্যাল",
@@ -90,17 +91,29 @@ const AIAssistant = () => {
         },
       ]);
 
-      if (location && category !== "unknown") {
-        const providerResponse = await findAvailableServices(
-          category,
-          location.latitude,
-          location.longitude
-        );
+      if (category !== "unknown") {
+  if (!location) {
+    setMessages((prev) => [
+      ...prev,
+      {
+        type: "ai",
+        text: "কাছাকাছি সেবাদাতা খুঁজতে আগে আপনার অবস্থান নির্বাচন করুন।",
+      },
+    ]);
 
-        setRequestMessage(userMessage);
-        setHasSearchedProviders(true);
-        setProviders(providerResponse.providers);
-      }
+    return;
+  }
+
+  const providerResponse = await findAvailableServices(
+    category,
+    location.latitude,
+    location.longitude
+  );
+
+  setRequestMessage(userMessage);
+  setHasSearchedProviders(true);
+  setProviders(providerResponse.providers);
+}
     } catch (error) {
       console.error("AI error:", error);
 
@@ -249,47 +262,36 @@ const AIAssistant = () => {
                 </div>
               )
             )}
-
-            <button
-              type="button"
-              onClick={getUserLocation}
-              className="mt-4 w-full rounded-xl bg-primary px-4 py-3 font-bengali font-semibold text-surface transition hover:bg-primary-hover"
-            >
-               আমার অবস্থান ব্যবহার করুন
-            </button>
-
-            {location && (
-              <div className="mt-3 rounded-xl bg-background p-3 font-bengali text-sm text-text">
-                <p>অবস্থান পাওয়া গেছে </p>
-
-                <p className="mt-1 text-text-muted">
-                  Latitude: {location.latitude}
-                </p>
-
-                <p className="text-text-muted">
-                  Longitude: {location.longitude}
-                </p>
-              </div>
-            )}
           </div>
 
           <div className="flex gap-2 border-t border-border p-4">
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="আপনার সমস্যাটি লিখুন..."
-              className="min-w-0 flex-1 rounded-xl border border-border bg-background px-3 py-2.5 font-bengali text-sm text-text outline-none focus:border-primary"
-            />
+  <div className="relative min-w-0 flex-1">
+    <button
+      type="button"
+      onClick={getUserLocation}
+      title="কাছাকাছি সেবাদাতা খুঁজুন"
+      className="absolute left-3 top-1/2 z-10 -translate-y-1/2 text-text-muted transition hover:text-primary"
+    >
+      <MapPin className="h-4 w-4" />
+    </button>
 
-            <button
-              type="button"
-              onClick={handleSendMessage}
-              className="rounded-xl bg-primary px-4 py-2.5 font-bengali font-semibold text-surface transition hover:bg-primary-hover"
-            >
-              পাঠান
-            </button>
-          </div>
+    <input
+      type="text"
+      value={message}
+      onChange={(e) => setMessage(e.target.value)}
+      placeholder="আপনার সমস্যাটি লিখুন..."
+      className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-3 font-bengali text-sm text-text outline-none focus:border-primary"
+    />
+  </div>
+
+  <button
+    type="button"
+    onClick={handleSendMessage}
+    className="rounded-xl bg-primary px-4 py-2.5 font-bengali font-semibold text-surface transition hover:bg-primary-hover"
+  >
+    পাঠান
+  </button>
+</div>
         </div>
       )}
 
