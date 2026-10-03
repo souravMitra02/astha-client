@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {useEffect, useRef, useState } from "react";
 import useAuth from "../../hooks/useAuth";
 import { askAI } from "../../services/aiService";
 import { findAvailableServices } from "../../services/serviceService";
@@ -25,6 +25,13 @@ const AIAssistant = () => {
   const [requestedProviders, setRequestedProviders] = useState([]);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [hasSearchedProviders, setHasSearchedProviders] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+  if (isOpen) {
+    inputRef.current?.focus();
+  }
+}, [isOpen]);
 
   const { user } = useAuth();
 
@@ -297,7 +304,8 @@ const AIAssistant = () => {
 
     <input
       type="text"
-      value={message}
+                value={message}
+                ref={inputRef}
       onChange={(e) => setMessage(e.target.value)}
       placeholder="আপনার সমস্যাটি লিখুন..."
       className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-3 font-bengali text-sm text-text outline-none focus:border-primary"
