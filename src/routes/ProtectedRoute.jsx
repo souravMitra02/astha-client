@@ -15,8 +15,14 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/" replace />;
-  }
+  return (
+    <Navigate
+      to="/"
+      replace
+      state={{ openLogin: true }}
+    />
+  );
+}
 
   return children;
 };

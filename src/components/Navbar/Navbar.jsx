@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState,useEffect } from "react";
+import { Link,useLocation,useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import LoginModal from "../LoginModal/LoginModal";
 import RegisterModal from "../RegisterModal/RegisterModal";
@@ -19,6 +19,19 @@ const Navbar = () => {
   const [showMenu, setShowMenu] = useState(false);
 
   const { user, logout } = useAuth();
+  const location = useLocation();
+const navigate = useNavigate();
+
+  useEffect(() => {
+  if (location.state?.openLogin) {
+    setShowLogin(true);
+
+    navigate(location.pathname, {
+      replace: true,
+      state: null,
+    });
+  }
+}, [location, navigate]);
 
   const closeMenu = () => {
     setShowMenu(false);
