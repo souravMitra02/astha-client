@@ -60,3 +60,16 @@ export const createRequest = async (serviceId, message) => {
 
   return response.data;
 };
+
+
+export const getSingleRequest = async (id) => {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.get(`${API_URL}/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};

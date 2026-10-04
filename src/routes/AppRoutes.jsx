@@ -7,6 +7,7 @@ import Services from "../pages/Services/Services";
 import Providers from "../pages/Providers/Providers";
 import ProviderDetails from "../pages/ProviderDetails/ProviderDetails";
 import NotFound from "../pages/NotFound/NotFound";
+import RequestDetails from "../pages/RequestDetails/RequestDetails";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -24,6 +25,14 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+  path="/requests/:id"
+  element={
+    <ProtectedRoute>
+      <RequestDetails />
+    </ProtectedRoute>
+  }
+/>
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

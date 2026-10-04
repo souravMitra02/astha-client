@@ -114,17 +114,14 @@ const Navbar = () => {
   }, [user]);
 
   const handleNotificationClick = async (notification) => {
-    if (notification.isRead) {
-      return;
-    }
+  const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
+  if (!token) {
+    return;
+  }
 
-    if (!token) {
-      return;
-    }
-
-    try {
+  try {
+    if (!notification.isRead) {
       await markNotificationAsRead(notification._id, token);
 
       setNotifications((prev) =>
@@ -136,11 +133,17 @@ const Navbar = () => {
       );
 
       setUnreadCount((prev) => Math.max(prev - 1, 0));
-    } catch (error) {
-      console.error("Mark notification as read error:", error);
     }
-  };
 
+    setShowNotifications(false);
+
+    if (notification.requestId) {
+      navigate(`/requests/${notification.requestId}`);
+    }
+  } catch (error) {
+    console.error("Mark notification as read error:", error);
+  }
+};
   const handleMarkAllAsRead = async () => {
     if (unreadCount === 0) {
       return;
