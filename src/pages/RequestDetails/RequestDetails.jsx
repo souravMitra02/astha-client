@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Mail, Phone, User } from "lucide-react";
+import { ArrowLeft, Mail, Phone, User } from "lucide-react";
 import { getSingleRequest } from "../../services/requestService";
 
 const RequestDetails = () => {
@@ -59,6 +59,15 @@ const RequestDetails = () => {
   return (
     <div className="min-h-screen bg-background px-4 py-8">
       <div className="mx-auto max-w-3xl">
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          className="mb-5 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-bengali text-sm font-medium text-text-muted transition-colors hover:bg-surface hover:text-primary"
+        >
+          <ArrowLeft size={18} />
+          ফিরে যান
+        </button>
+
         <div className="mb-6">
           <h1 className="font-heading text-2xl font-bold text-text">
             অনুরোধের বিস্তারিত
@@ -70,13 +79,13 @@ const RequestDetails = () => {
         </div>
 
         <div className="rounded-xl border border-border bg-surface p-6">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between gap-4">
             <h2 className="font-heading text-xl font-semibold text-text">
               সেবা অনুরোধ
             </h2>
 
             <span
-              className={`rounded-full px-3 py-1 font-bengali text-sm font-medium ${getStatusStyle(
+              className={`shrink-0 rounded-full px-3 py-1 font-bengali text-sm font-medium ${getStatusStyle(
                 request?.status
               )}`}
             >
@@ -105,63 +114,63 @@ const RequestDetails = () => {
               </p>
             </div>
 
-           <div className="border-t border-border pt-5">
-  <p className="mb-3 font-bengali text-sm font-medium text-text-muted">
-    সেবাদাতা
-  </p>
+            <div className="border-t border-border pt-5">
+              <p className="mb-3 font-bengali text-sm font-medium text-text-muted">
+                সেবাদাতা
+              </p>
 
-  <div className="rounded-xl border border-border bg-background p-4">
-    <div className="space-y-4">
-      {/* Name */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <User size={18} className="text-primary" />
-        </div>
+              <div className="rounded-xl border border-border bg-background p-4">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <User size={18} className="text-primary" />
+                    </div>
 
-        <div className="min-w-0">
-          <p className="font-bengali text-xs text-text-muted">
-            নাম
-          </p>
-          <p className="mt-0.5 font-bengali text-sm font-semibold text-text">
-            {request?.providerName}
-          </p>
-        </div>
-      </div>
+                    <div className="min-w-0">
+                      <p className="font-bengali text-xs text-text-muted">
+                        নাম
+                      </p>
 
-      {/* Email */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Mail size={18} className="text-primary" />
-        </div>
+                      <p className="mt-0.5 font-bengali text-sm font-semibold text-text">
+                        {request?.providerName}
+                      </p>
+                    </div>
+                  </div>
 
-        <div className="min-w-0">
-          <p className="font-bengali text-xs text-text-muted">
-            ইমেইল
-          </p>
-          <p className="mt-0.5 truncate text-sm font-medium text-text">
-            {request?.providerEmail}
-          </p>
-        </div>
-      </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Mail size={18} className="text-primary" />
+                    </div>
 
-      {/* Phone */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Phone size={18} className="text-primary" />
-        </div>
+                    <div className="min-w-0">
+                      <p className="font-bengali text-xs text-text-muted">
+                        ইমেইল
+                      </p>
 
-        <div>
-          <p className="font-bengali text-xs text-text-muted">
-            ফোন
-          </p>
-          <p className="mt-0.5 text-sm font-medium text-text">
-            {request?.providerPhone}
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+                      <p className="mt-0.5 truncate text-sm font-medium text-text">
+                        {request?.providerEmail}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Phone size={18} className="text-primary" />
+                    </div>
+
+                    <div>
+                      <p className="font-bengali text-xs text-text-muted">
+                        ফোন
+                      </p>
+
+                      <p className="mt-0.5 text-sm font-medium text-text">
+                        {request?.providerPhone}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <div className="border-t border-border pt-5">
               <p className="font-bengali text-sm text-text-muted">
