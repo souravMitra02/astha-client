@@ -46,19 +46,19 @@ const RequestDetails = () => {
     }
 
     return "অপেক্ষমাণ";
-    };
-    
-    const getStatusMessage = (status) => {
-  if (status === "accepted") {
-    return "সেবাদাতা আপনার অনুরোধটি গ্রহণ করেছেন।";
-  }
+  };
 
-  if (status === "rejected") {
-    return "সেবাদাতা এই অনুরোধটি গ্রহণ করতে পারেননি।";
-  }
+  const getStatusMessage = (status) => {
+    if (status === "accepted") {
+      return "সেবাদাতা আপনার অনুরোধটি গ্রহণ করেছেন।";
+    }
 
-  return "সেবাদাতা আপনার অনুরোধটি পর্যালোচনা করছেন।";
-};
+    if (status === "rejected") {
+      return "সেবাদাতা এই অনুরোধটি গ্রহণ করতে পারেননি।";
+    }
+
+    return "সেবাদাতা আপনার অনুরোধটি পর্যালোচনা করছেন।";
+  };
 
   if (loading) {
     return (
@@ -92,24 +92,24 @@ const RequestDetails = () => {
 
         <div className="rounded-xl border border-border bg-surface p-6">
           <div className="mb-6 flex items-center justify-between gap-4">
-  <div>
-    <h2 className="font-heading text-xl font-semibold text-text">
-      সেবা অনুরোধ
-    </h2>
+            <div>
+              <h2 className="font-heading text-xl font-semibold text-text">
+                সেবা অনুরোধ
+              </h2>
 
-    <p className="mt-2 font-bengali text-sm text-text-muted">
-      {getStatusMessage(request?.status)}
-    </p>
-  </div>
+              <p className="mt-2 font-bengali text-sm text-text-muted">
+                {getStatusMessage(request?.status)}
+              </p>
+            </div>
 
-  <span
-    className={`shrink-0 rounded-full px-3 py-1 font-bengali text-sm font-medium ${getStatusStyle(
-      request?.status
-    )}`}
-  >
-    {getStatusText(request?.status)}
-  </span>
-</div>
+            <span
+              className={`shrink-0 rounded-full px-3 py-1 font-bengali text-sm font-medium ${getStatusStyle(
+                request?.status
+              )}`}
+            >
+              {getStatusText(request?.status)}
+            </span>
+          </div>
 
           <div className="space-y-5">
             <div>
@@ -165,9 +165,12 @@ const RequestDetails = () => {
                         ইমেইল
                       </p>
 
-                      <p className="mt-0.5 truncate text-sm font-medium text-text">
+                      <a
+                        href={`mailto:${request?.providerEmail}`}
+                        className="mt-0.5 block truncate text-sm font-medium text-primary hover:underline"
+                      >
                         {request?.providerEmail}
-                      </p>
+                      </a>
                     </div>
                   </div>
 
@@ -181,9 +184,12 @@ const RequestDetails = () => {
                         ফোন
                       </p>
 
-                      <p className="mt-0.5 text-sm font-medium text-text">
+                      <a
+                        href={`tel:${request?.providerPhone}`}
+                        className="mt-0.5 block text-sm font-medium text-primary hover:underline"
+                      >
                         {request?.providerPhone}
-                      </p>
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -191,16 +197,16 @@ const RequestDetails = () => {
             </div>
 
             <div className="border-t border-border pt-5">
-  <p className="mb-3 font-bengali text-sm font-medium text-text-muted">
-    আপনার বার্তা
-  </p>
+              <p className="mb-3 font-bengali text-sm font-medium text-text-muted">
+                আপনার বার্তা
+              </p>
 
-  <div className="rounded-lg border border-border bg-background p-4">
-    <p className="font-bengali text-sm leading-7 text-text">
-      {request?.message}
-    </p>
-  </div>
-</div>
+              <div className="rounded-lg border border-border bg-background p-4">
+                <p className="font-bengali text-sm leading-7 text-text">
+                  {request?.message}
+                </p>
+              </div>
+            </div>
 
             <div className="border-t border-border pt-5">
               <p className="font-bengali text-sm text-text-muted">
