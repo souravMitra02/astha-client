@@ -46,7 +46,19 @@ const RequestDetails = () => {
     }
 
     return "অপেক্ষমাণ";
-  };
+    };
+    
+    const getStatusMessage = (status) => {
+  if (status === "accepted") {
+    return "সেবাদাতা আপনার অনুরোধটি গ্রহণ করেছেন।";
+  }
+
+  if (status === "rejected") {
+    return "সেবাদাতা এই অনুরোধটি গ্রহণ করতে পারেননি।";
+  }
+
+  return "সেবাদাতা আপনার অনুরোধটি পর্যালোচনা করছেন।";
+};
 
   if (loading) {
     return (
@@ -80,18 +92,24 @@ const RequestDetails = () => {
 
         <div className="rounded-xl border border-border bg-surface p-6">
           <div className="mb-6 flex items-center justify-between gap-4">
-            <h2 className="font-heading text-xl font-semibold text-text">
-              সেবা অনুরোধ
-            </h2>
+  <div>
+    <h2 className="font-heading text-xl font-semibold text-text">
+      সেবা অনুরোধ
+    </h2>
 
-            <span
-              className={`shrink-0 rounded-full px-3 py-1 font-bengali text-sm font-medium ${getStatusStyle(
-                request?.status
-              )}`}
-            >
-              {getStatusText(request?.status)}
-            </span>
-          </div>
+    <p className="mt-2 font-bengali text-sm text-text-muted">
+      {getStatusMessage(request?.status)}
+    </p>
+  </div>
+
+  <span
+    className={`shrink-0 rounded-full px-3 py-1 font-bengali text-sm font-medium ${getStatusStyle(
+      request?.status
+    )}`}
+  >
+    {getStatusText(request?.status)}
+  </span>
+</div>
 
           <div className="space-y-5">
             <div>
