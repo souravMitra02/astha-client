@@ -191,14 +191,16 @@ const RequestDetails = () => {
             </div>
 
             <div className="border-t border-border pt-5">
-              <p className="font-bengali text-sm text-text-muted">
-                আপনার বার্তা
-              </p>
+  <p className="mb-3 font-bengali text-sm font-medium text-text-muted">
+    আপনার বার্তা
+  </p>
 
-              <p className="mt-1 font-bengali text-base text-text">
-                {request?.message}
-              </p>
-            </div>
+  <div className="rounded-lg border border-border bg-background p-4">
+    <p className="font-bengali text-sm leading-7 text-text">
+      {request?.message}
+    </p>
+  </div>
+</div>
 
             <div className="border-t border-border pt-5">
               <p className="font-bengali text-sm text-text-muted">
