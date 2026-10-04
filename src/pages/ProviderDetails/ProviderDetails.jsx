@@ -117,27 +117,62 @@ setRequestMessage("");
     <section className="bg-background py-12">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {/* Provider Information */}
-        <div className="rounded-xl border border-border bg-surface p-6">
-          <h1 className="font-heading text-3xl font-bold text-text">
-            {provider.name}
-          </h1>
+        {/* Provider Information */}
+<div className="rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">
+  <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p className="font-bengali text-sm font-medium text-primary">
+        সেবাদাতা
+      </p>
 
-          <div className="mt-5 space-y-3">
-            <div className="flex items-center gap-2 font-bengali text-text-muted">
-              <BriefcaseBusiness className="h-5 w-5 text-primary" />
+      <h1 className="mt-2 font-heading text-3xl font-bold text-text sm:text-4xl">
+        {provider.name}
+      </h1>
+    </div>
 
-              <span>
-                {categoryLabels[provider.category] || "সেবাদাতা"}
-              </span>
-            </div>
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 font-heading text-2xl font-bold text-primary">
+      {provider.name?.charAt(0)}
+    </div>
+  </div>
 
-            <div className="flex items-center gap-2 font-bengali text-text-muted">
-              <Phone className="h-5 w-5 text-primary" />
-
-              <span>{provider.phone}</span>
-            </div>
-          </div>
+  <div className="mt-7 grid gap-4 sm:grid-cols-2">
+    <div className="rounded-xl bg-background p-4">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <BriefcaseBusiness className="h-5 w-5 text-primary" />
         </div>
+
+        <div>
+          <p className="font-bengali text-xs text-text-muted">
+            কাজের ধরন
+          </p>
+
+          <p className="mt-1 font-bengali font-semibold text-text">
+            {categoryLabels[provider.category] || "সেবাদাতা"}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div className="rounded-xl bg-background p-4">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Phone className="h-5 w-5 text-primary" />
+        </div>
+
+        <div>
+          <p className="font-bengali text-xs text-text-muted">
+            ফোন নম্বর
+          </p>
+
+          <p className="mt-1 font-bengali font-semibold text-text">
+            {provider.phone}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
         {/* Services */}
         <div className="mt-10">
@@ -152,44 +187,54 @@ setRequestMessage("");
           ) : (
             <div className="mt-6 grid gap-6 sm:grid-cols-2">
               {services.map((service) => (
-                <div
-                  key={service._id}
-                  className="rounded-xl border border-border bg-surface p-6"
-                >
-                  <h3 className="font-heading text-xl font-bold text-text">
-                    {service.title}
-                  </h3>
+               <div
+  key={service._id}
+  className="flex h-full flex-col rounded-2xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md sm:p-7"
+>
+  <div className="flex items-start justify-between gap-4">
+    <div>
+      <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 font-bengali text-xs font-semibold text-primary">
+        {categoryLabels[service.category] || service.category}
+      </span>
 
-                  <p className="mt-2 font-bengali text-sm text-text-muted">
-                    {categoryLabels[service.category] || service.category}
-                  </p>
+      <h3 className="mt-4 font-heading text-xl font-bold text-text">
+        {service.title}
+      </h3>
+    </div>
 
-                  <p className="mt-4 font-bengali text-sm leading-6 text-text-muted">
-                    {service.description}
-                  </p>
+    <div className="shrink-0 text-right">
+      <p className="font-bengali text-xs text-text-muted">
+        মূল্য
+      </p>
 
-                  <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-                    <div className="flex items-center gap-2 font-bengali text-sm text-text-muted">
-                      <MapPin className="h-4 w-4 text-primary" />
+      <p className="mt-1 font-heading text-xl font-bold text-primary">
+        ৳{service.price}
+      </p>
+    </div>
+  </div>
 
-                      <span>{service.location}</span>
-                    </div>
+  <p className="mt-4 flex-1 font-bengali text-sm leading-7 text-text-muted">
+    {service.description}
+  </p>
 
-                    <span className="font-bengali font-semibold text-text">
-                      ৳{service.price}
-                    </span>
-                  </div>
+  <div className="mt-6 flex items-center gap-2 border-t border-border pt-4">
+    <MapPin className="h-4 w-4 shrink-0 text-primary" />
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedService(service);
-                    }}
-                    className="mt-5 w-full rounded-lg bg-primary px-4 py-2.5 font-bengali text-sm font-semibold text-surface transition-colors hover:bg-primary-hover"
-                  >
-                    সেবা চাই
-                  </button>
-                </div>
+    <span className="font-bengali text-sm text-text-muted">
+      {service.location}
+    </span>
+  </div>
+
+  <button
+    type="button"
+    onClick={() => {
+      setSelectedService(service);
+    }}
+    className="mt-5 w-full rounded-xl bg-primary px-4 py-3 font-bengali text-sm font-semibold text-surface transition-colors hover:bg-primary-hover"
+  >
+    সেবা চাই
+  </button>
+</div>
               ))}
             </div>
           )}
@@ -198,58 +243,76 @@ setRequestMessage("");
 
       {/* Request Modal */}
       {selectedService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-lg rounded-xl bg-surface p-6 shadow-xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="font-heading text-2xl font-bold text-text">
-                  সেবা চাই
-                </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
+    <div className="w-full max-w-lg rounded-2xl border border-border bg-surface shadow-xl">
+      <div className="flex items-start justify-between gap-4 border-b border-border p-6 sm:p-7">
+        <div>
+          <p className="font-bengali text-sm font-medium text-primary">
+            সেবা নেওয়ার অনুরোধ
+          </p>
 
-                <p className="mt-1 font-bengali text-sm text-text-muted">
-                  {selectedService.title}
-                </p>
-              </div>
+          <h2 className="mt-1 font-heading text-2xl font-bold text-text">
+            সেবা চাই
+          </h2>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedService(null);
-                  setRequestMessage("");
-                }}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-background hover:text-text"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+          <p className="mt-2 font-bengali text-sm text-text-muted">
+            {selectedService.title}
+          </p>
+        </div>
 
-            <div className="mt-6">
-              <label
-                htmlFor="requestMessage"
-                className="font-bengali text-sm font-medium text-text"
-              >
-                আপনার প্রয়োজন সম্পর্কে লিখুন
-              </label>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedService(null);
+            setRequestMessage("");
+          }}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-background hover:text-text"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
 
-              <textarea
-                id="requestMessage"
-                value={requestMessage}
-                onChange={(e) => setRequestMessage(e.target.value)}
-                rows="5"
-                placeholder="আপনার সমস্যাটি সংক্ষেপে লিখুন..."
-                className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 font-bengali text-sm text-text outline-none focus:border-primary"
-              />
-            </div>
+      <div className="p-6 sm:p-7">
+        <div className="rounded-xl bg-background p-4">
+          <div className="flex items-center justify-between gap-4">
+            <span className="font-bengali text-sm text-text-muted">
+              সেবার মূল্য
+            </span>
 
-            <button
-                          type="button"
-                           onClick={handleRequestSubmit}
-              className="mt-5 w-full rounded-lg bg-primary px-4 py-3 font-bengali text-sm font-semibold text-surface transition-colors hover:bg-primary-hover"
-            >
-              অনুরোধ পাঠান
-            </button>
+            <span className="font-heading font-bold text-primary">
+              ৳{selectedService.price}
+            </span>
           </div>
         </div>
+
+        <div className="mt-6">
+          <label
+            htmlFor="requestMessage"
+            className="font-bengali text-sm font-semibold text-text"
+          >
+            আপনার প্রয়োজন সম্পর্কে লিখুন
+          </label>
+
+          <textarea
+            id="requestMessage"
+            value={requestMessage}
+            onChange={(e) => setRequestMessage(e.target.value)}
+            rows="5"
+            placeholder="আপনার সমস্যাটি বিস্তারিত লিখুন..."
+            className="mt-2 w-full resize-none rounded-xl border border-border bg-background px-4 py-3 font-bengali text-sm leading-7 text-text outline-none transition-colors placeholder:text-text-muted focus:border-primary"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleRequestSubmit}
+          className="mt-6 w-full rounded-xl bg-primary px-4 py-3.5 font-bengali font-semibold text-surface transition-colors hover:bg-primary-hover"
+        >
+          অনুরোধ পাঠান
+        </button>
+      </div>
+    </div>
+  </div>
       )}
     </section>
   );
