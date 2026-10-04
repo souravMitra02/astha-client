@@ -1,29 +1,40 @@
 import { useForm } from "react-hook-form";
 import { createRequest } from "../../services/requestService";
 import Swal from "sweetalert2";
+
 const RequestForm = ({ service }) => {
   const {
     register,
-      handleSubmit,
+    handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm();
 
-    const onSubmit = async (data) => {
-  try {
-    const response = await createRequest(service._id, data.message);
+  const onSubmit = async (data) => {
+    try {
+      const response = await createRequest(service._id, data.message);
 
-    await Swal.fire({
-      icon: "success",
-      title: "অনুরোধ সফল হয়েছে",
-      text: response.message,
-      confirmButtonText: "ঠিক আছে",
-    });
+      await Swal.fire({
+        icon: "success",
+        title: "অনুরোধ সফল হয়েছে",
+        text: response.message,
+        confirmButtonText: "ঠিক আছে",
+      });
+
       reset();
-  } catch (error) {
-    console.error("Create request error:", error);
-  }
-};
+    } catch (error) {
+      console.error("Create request error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "অনুরোধ ব্যর্থ হয়েছে",
+        text:
+          error.response?.data?.message ||
+          "অনুরোধ পাঠাতে সমস্যা হয়েছে। আবার চেষ্টা করুন।",
+        confirmButtonText: "ঠিক আছে",
+      });
+    }
+  };
 
   return (
     <div className="mt-8 rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">
@@ -32,16 +43,13 @@ const RequestForm = ({ service }) => {
           সেবা নেওয়ার জন্য অনুরোধ করুন
         </h2>
 
-        <p className="mt-2 font-bengali text-sm leading-6 text-text-muted">
+        <p className="mt-2 font-bengali text-sm leading-7 text-text-muted">
           আপনার সমস্যার বিস্তারিত তথ্য দিন। সেবাদাতা আপনার অনুরোধটি দেখে
           যোগাযোগ করবেন।
         </p>
       </div>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mt-6 space-y-5"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5">
         <div>
           <label className="font-bengali text-sm font-semibold text-text">
             সেবার নাম
@@ -78,9 +86,10 @@ const RequestForm = ({ service }) => {
 
         <button
           type="submit"
-          className="w-full rounded-xl bg-primary px-5 py-3.5 font-bengali font-semibold text-surface transition hover:bg-primary-hover"
+          disabled={isSubmitting}
+          className="w-full rounded-xl bg-primary px-5 py-3.5 font-bengali font-semibold text-surface transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
-          অনুরোধ পাঠান
+          {isSubmitting ? "পাঠানো হচ্ছে..." : "অনুরোধ পাঠান"}
         </button>
       </form>
     </div>
