@@ -11,6 +11,7 @@ import {
   markAllNotificationsAsRead,
   deleteNotification,
 } from "../../services/notificationService";
+import socket from "../../services/socket";
 
 const navItems = [
   { name: "হোম", path: "/" },
@@ -93,6 +94,23 @@ const Navbar = () => {
     };
 
     loadNotifications();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const handleNewNotification = (notification) => {
+      setNotifications((prev) => [notification, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    };
+
+    socket.on("new_notification", handleNewNotification);
+
+    return () => {
+      socket.off("new_notification", handleNewNotification);
+    };
   }, [user]);
 
   const handleNotificationClick = async (notification) => {
@@ -207,7 +225,6 @@ const Navbar = () => {
               </p>
             </Link>
 
-            {/* Desktop Navigation */}
             <nav className="hidden items-center gap-7 md:flex">
               {navItems.map((item) => (
                 <Link
@@ -220,11 +237,9 @@ const Navbar = () => {
               ))}
             </nav>
 
-            {/* Desktop Actions */}
             <div className="hidden items-center gap-3 md:flex">
               {user ? (
                 <>
-                  {/* Notification */}
                   <div className="relative">
                     <button
                       type="button"
@@ -243,10 +258,8 @@ const Navbar = () => {
                       )}
                     </button>
 
-                    {/* Notification Dropdown */}
                     {showNotifications && (
                       <div className="absolute right-0 top-full z-50 mt-3 w-96 overflow-hidden rounded-2xl border border-border bg-surface shadow-xl">
-                        {/* Dropdown Header */}
                         <div className="flex items-center justify-between border-b border-border px-4 py-3">
                           <div>
                             <h3 className="font-heading text-base font-bold text-text">
@@ -271,7 +284,6 @@ const Navbar = () => {
                           )}
                         </div>
 
-                        {/* Notification List */}
                         <div className="max-h-96 overflow-y-auto">
                           {notifications.length === 0 ? (
                             <div className="px-5 py-10 text-center">
@@ -378,7 +390,6 @@ const Navbar = () => {
               </Link>
             </div>
 
-            {/* Mobile Menu Button */}
             <button
               type="button"
               onClick={() => setShowMenu((prev) => !prev)}
@@ -396,7 +407,6 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* Mobile Menu */}
           {showMenu && (
             <div className="border-t border-border py-4 md:hidden">
               <nav className="flex flex-col gap-1">
@@ -415,7 +425,6 @@ const Navbar = () => {
               <div className="mt-4 border-t border-border pt-4">
                 {user ? (
                   <div className="flex flex-col gap-2">
-                    {/* Mobile Notification */}
                     <button
                       type="button"
                       onClick={() =>
@@ -435,10 +444,8 @@ const Navbar = () => {
                       )}
                     </button>
 
-                    {/* Mobile Notification List */}
                     {showNotifications && (
                       <div className="overflow-hidden rounded-xl border border-border bg-background">
-                        {/* Mobile Read All */}
                         {unreadCount > 0 && (
                           <div className="flex justify-end border-b border-border px-4 py-2">
                             <button
@@ -545,7 +552,6 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Login Modal */}
       {showLogin && (
         <LoginModal
           onClose={() => setShowLogin(false)}
@@ -556,7 +562,6 @@ const Navbar = () => {
         />
       )}
 
-      {/* Register Modal */}
       {showRegister && (
         <RegisterModal
           onClose={() => setShowRegister(false)}
