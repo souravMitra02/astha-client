@@ -1,9 +1,10 @@
-import { useState,useEffect } from "react";
-import { Link,useLocation,useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Bell, Menu, X } from "lucide-react";
 import LoginModal from "../LoginModal/LoginModal";
 import RegisterModal from "../RegisterModal/RegisterModal";
 import useAuth from "../../hooks/useAuth";
+import { getUnreadNotificationCount } from "../../services/notificationService";
 
 const navItems = [
   { name: "হোম", path: "/" },
@@ -17,21 +18,48 @@ const Navbar = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const { user, logout } = useAuth();
   const location = useLocation();
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
-  if (location.state?.openLogin) {
-    setShowLogin(true);
+    if (location.state?.openLogin) {
+      setShowLogin(true);
 
-    navigate(location.pathname, {
-      replace: true,
-      state: null,
-    });
-  }
-}, [location, navigate]);
+      navigate(location.pathname, {
+        replace: true,
+        state: null,
+      });
+    }
+  }, [location, navigate]);
+
+  useEffect(() => {
+    const loadUnreadCount = async () => {
+      if (!user) {
+        setUnreadCount(0);
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setUnreadCount(0);
+        return;
+      }
+
+      try {
+        const data = await getUnreadNotificationCount(token);
+
+        setUnreadCount(data.count || 0);
+      } catch (error) {
+        console.error("Unread notification count error:", error);
+      }
+    };
+
+    loadUnreadCount();
+  }, [user]);
 
   const closeMenu = () => {
     setShowMenu(false);
@@ -39,6 +67,7 @@ const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
+    setUnreadCount(0);
     closeMenu();
   };
 
@@ -78,6 +107,21 @@ const navigate = useNavigate();
             <div className="hidden items-center gap-3 md:flex">
               {user ? (
                 <>
+                  {/* Notification */}
+                  <button
+                    type="button"
+                    className="relative rounded-lg p-2.5 text-text-muted transition-colors hover:bg-background hover:text-primary"
+                    aria-label="নোটিফিকেশন"
+                  >
+                    <Bell size={20} />
+
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 font-bengali text-[10px] font-bold text-surface">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
                   <Link
                     to="/dashboard"
                     className="font-bengali text-sm font-semibold text-text transition-colors hover:text-primary"
@@ -87,7 +131,7 @@ const navigate = useNavigate();
 
                   <button
                     type="button"
-                    onClick={logout}
+                    onClick={handleLogout}
                     className="rounded-lg px-3 py-2 font-bengali text-sm font-medium text-text-muted transition-colors hover:text-danger"
                   >
                     লগআউট
@@ -146,6 +190,23 @@ const navigate = useNavigate();
               <div className="mt-4 border-t border-border pt-4">
                 {user ? (
                   <div className="flex flex-col gap-2">
+                    {/* Mobile Notification */}
+                    <button
+                      type="button"
+                      className="flex items-center justify-between rounded-lg px-3 py-2.5 font-bengali text-sm font-medium text-text transition-colors hover:bg-background hover:text-primary"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Bell size={18} />
+                        নোটিফিকেশন
+                      </span>
+
+                      {unreadCount > 0 && (
+                        <span className="flex min-h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 font-bengali text-[10px] font-bold text-surface">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                    </button>
+
                     <Link
                       to="/dashboard"
                       onClick={closeMenu}
