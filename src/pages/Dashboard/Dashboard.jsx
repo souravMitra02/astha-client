@@ -12,6 +12,7 @@ import {
   Calendar,
   ArrowLeft,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import useAuth from "../../hooks/useAuth";
 import {
   getMyRequests,
@@ -50,6 +51,28 @@ const Dashboard = () => {
   }, [user]);
 
   const handleStatusUpdate = async (requestId, status) => {
+    const isAccepting = status === "accepted";
+
+    const result = await Swal.fire({
+      title: isAccepting
+        ? "অনুরোধটি গ্রহণ করবেন?"
+        : "অনুরোধটি প্রত্যাখ্যান করবেন?",
+      text: isAccepting
+        ? "এই সেবার অনুরোধটি গ্রহণ করলে গ্রাহককে জানানো হবে।"
+        : "এই সেবার অনুরোধটি প্রত্যাখ্যান করলে গ্রাহককে জানানো হবে।",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: isAccepting
+        ? "হ্যাঁ, গ্রহণ করুন"
+        : "হ্যাঁ, প্রত্যাখ্যান করুন",
+      cancelButtonText: "বাতিল",
+      reverseButtons: true,
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
     try {
       setUpdatingId(requestId);
 
@@ -62,8 +85,26 @@ const Dashboard = () => {
             : request
         )
       );
+
+      await Swal.fire({
+        title: isAccepting
+          ? "অনুরোধ গৃহীত"
+          : "অনুরোধ প্রত্যাখ্যাত",
+        text: isAccepting
+          ? "সেবার অনুরোধটি সফলভাবে গ্রহণ করা হয়েছে।"
+          : "সেবার অনুরোধটি সফলভাবে প্রত্যাখ্যান করা হয়েছে।",
+        icon: "success",
+        confirmButtonText: "ঠিক আছে",
+      });
     } catch (error) {
       console.error("Status update error:", error);
+
+      await Swal.fire({
+        title: "সমস্যা হয়েছে",
+        text: "অনুরোধের status পরিবর্তন করা যায়নি। আবার চেষ্টা করুন।",
+        icon: "error",
+        confirmButtonText: "ঠিক আছে",
+      });
     } finally {
       setUpdatingId(null);
     }
@@ -100,13 +141,15 @@ const Dashboard = () => {
       title: "গৃহীত",
       value: acceptedRequests,
       icon: CheckCircle2,
-      bgClass: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+      bgClass:
+        "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
     },
     {
       title: "প্রত্যাখ্যাত",
       value: rejectedRequests,
       icon: XCircle,
-      bgClass: "bg-rose-500/10 text-rose-600 border-rose-500/20",
+      bgClass:
+        "bg-rose-500/10 text-rose-600 border-rose-500/20",
     },
   ];
 
@@ -160,7 +203,8 @@ const Dashboard = () => {
             </span>
 
             <h1 className="mt-2 font-heading text-xl font-bold tracking-tight text-text sm:mt-3 sm:text-3xl lg:text-4xl">
-              স্বাগতম, <span className="text-primary">{user?.name}</span>!
+              স্বাগতম,{" "}
+              <span className="text-primary">{user?.name}</span>!
             </h1>
 
             <p className="mt-2 font-bengali text-xs leading-relaxed text-text-muted sm:text-base">
@@ -345,7 +389,8 @@ const Dashboard = () => {
                     {/* Message Box */}
                     <div className="rounded-xl border border-border/40 bg-background/60 p-3 sm:p-3.5">
                       <p className="font-bengali text-xs leading-relaxed text-text-muted sm:text-sm">
-                        {request.message || "কোনো অতিরিক্ত বার্তা নেই।"}
+                        {request.message ||
+                          "কোনো অতিরিক্ত বার্তা নেই।"}
                       </p>
                     </div>
 
