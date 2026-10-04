@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, Menu, X } from "lucide-react";
+import { Bell, Menu, X, Trash2 } from "lucide-react";
 import LoginModal from "../LoginModal/LoginModal";
 import RegisterModal from "../RegisterModal/RegisterModal";
 import useAuth from "../../hooks/useAuth";
@@ -8,6 +8,8 @@ import {
   getMyNotifications,
   getUnreadNotificationCount,
   markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification,
 } from "../../services/notificationService";
 
 const navItems = [
@@ -121,6 +123,59 @@ const Navbar = () => {
     }
   };
 
+  const handleMarkAllAsRead = async () => {
+    if (unreadCount === 0) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    try {
+      await markAllNotificationsAsRead(token);
+
+      setNotifications((prev) =>
+        prev.map((notification) => ({
+          ...notification,
+          isRead: true,
+        }))
+      );
+
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Mark all notifications as read error:", error);
+    }
+  };
+
+  const handleDeleteNotification = async (id) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    try {
+      const notification = notifications.find(
+        (item) => item._id === id
+      );
+
+      await deleteNotification(id, token);
+
+      setNotifications((prev) =>
+        prev.filter((item) => item._id !== id)
+      );
+
+      if (notification && !notification.isRead) {
+        setUnreadCount((prev) => Math.max(prev - 1, 0));
+      }
+    } catch (error) {
+      console.error("Delete notification error:", error);
+    }
+  };
+
   const closeMenu = () => {
     setShowMenu(false);
   };
@@ -190,19 +245,33 @@ const Navbar = () => {
 
                     {/* Notification Dropdown */}
                     {showNotifications && (
-                      <div className="absolute right-0 top-full z-50 mt-3 w-80 overflow-hidden rounded-2xl border border-border bg-surface shadow-xl">
+                      <div className="absolute right-0 top-full z-50 mt-3 w-96 overflow-hidden rounded-2xl border border-border bg-surface shadow-xl">
+                        {/* Dropdown Header */}
                         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                          <h3 className="font-heading text-base font-bold text-text">
-                            নোটিফিকেশন
-                          </h3>
+                          <div>
+                            <h3 className="font-heading text-base font-bold text-text">
+                              নোটিফিকেশন
+                            </h3>
 
-                          {notifications.length > 0 && (
-                            <span className="font-bengali text-xs text-text-muted">
-                              {notifications.length}টি
-                            </span>
+                            {notifications.length > 0 && (
+                              <p className="mt-0.5 font-bengali text-xs text-text-muted">
+                                {notifications.length}টি নোটিফিকেশন
+                              </p>
+                            )}
+                          </div>
+
+                          {unreadCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={handleMarkAllAsRead}
+                              className="font-bengali text-xs font-medium text-primary transition-colors hover:text-primary-hover"
+                            >
+                              সব পড়া হয়েছে
+                            </button>
                           )}
                         </div>
 
+                        {/* Notification List */}
                         <div className="max-h-96 overflow-y-auto">
                           {notifications.length === 0 ? (
                             <div className="px-5 py-10 text-center">
@@ -219,18 +288,21 @@ const Navbar = () => {
                             notifications.map((notification) => (
                               <div
                                 key={notification._id}
-                                onClick={() =>
-                                  handleNotificationClick(
-                                    notification
-                                  )
-                                }
-                                className={`cursor-pointer border-b border-border px-4 py-4 last:border-b-0 ${
+                                className={`flex gap-3 border-b border-border px-4 py-4 last:border-b-0 ${
                                   !notification.isRead
                                     ? "bg-primary/5"
                                     : "bg-surface"
                                 }`}
                               >
-                                <div className="flex gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleNotificationClick(
+                                      notification
+                                    )
+                                  }
+                                  className="flex min-w-0 flex-1 gap-3 text-left"
+                                >
                                   <div className="mt-1 shrink-0">
                                     <Bell
                                       size={17}
@@ -251,7 +323,20 @@ const Navbar = () => {
                                       {notification.message}
                                     </p>
                                   </div>
-                                </div>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleDeleteNotification(
+                                      notification._id
+                                    )
+                                  }
+                                  className="shrink-0 self-start rounded-md p-1.5 text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                                  aria-label="নোটিফিকেশন মুছে ফেলুন"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
                               </div>
                             ))
                           )}
@@ -353,6 +438,19 @@ const Navbar = () => {
                     {/* Mobile Notification List */}
                     {showNotifications && (
                       <div className="overflow-hidden rounded-xl border border-border bg-background">
+                        {/* Mobile Read All */}
+                        {unreadCount > 0 && (
+                          <div className="flex justify-end border-b border-border px-4 py-2">
+                            <button
+                              type="button"
+                              onClick={handleMarkAllAsRead}
+                              className="font-bengali text-xs font-medium text-primary transition-colors hover:text-primary-hover"
+                            >
+                              সব পড়া হয়েছে
+                            </button>
+                          </div>
+                        )}
+
                         {notifications.length === 0 ? (
                           <div className="px-4 py-6 text-center">
                             <p className="font-bengali text-sm text-text-muted">
@@ -363,24 +461,42 @@ const Navbar = () => {
                           notifications.map((notification) => (
                             <div
                               key={notification._id}
-                              onClick={() =>
-                                handleNotificationClick(
-                                  notification
-                                )
-                              }
-                              className={`cursor-pointer border-b border-border px-4 py-3 last:border-b-0 ${
+                              className={`flex gap-3 border-b border-border px-4 py-3 last:border-b-0 ${
                                 !notification.isRead
                                   ? "bg-primary/5"
                                   : "bg-surface"
                               }`}
                             >
-                              <h4 className="font-bengali text-sm font-semibold text-text">
-                                {notification.title}
-                              </h4>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleNotificationClick(
+                                    notification
+                                  )
+                                }
+                                className="min-w-0 flex-1 text-left"
+                              >
+                                <h4 className="font-bengali text-sm font-semibold text-text">
+                                  {notification.title}
+                                </h4>
 
-                              <p className="mt-1 font-bengali text-xs leading-5 text-text-muted">
-                                {notification.message}
-                              </p>
+                                <p className="mt-1 font-bengali text-xs leading-5 text-text-muted">
+                                  {notification.message}
+                                </p>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeleteNotification(
+                                    notification._id
+                                  )
+                                }
+                                className="shrink-0 self-start rounded-md p-1.5 text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                                aria-label="নোটিফিকেশন মুছে ফেলুন"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           ))
                         )}
