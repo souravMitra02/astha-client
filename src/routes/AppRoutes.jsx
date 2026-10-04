@@ -6,6 +6,7 @@ import ServiceDetails from "../ServiceDetails/ServiceDetails";
 import Services from "../pages/Services/Services";
 import Providers from "../pages/Providers/Providers";
 import ProviderDetails from "../pages/ProviderDetails/ProviderDetails";
+import NotFound from "../pages/NotFound/NotFound";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -23,6 +24,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
