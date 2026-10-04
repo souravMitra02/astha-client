@@ -7,6 +7,7 @@ import useAuth from "../../hooks/useAuth";
 import {
   getMyNotifications,
   getUnreadNotificationCount,
+  markNotificationAsRead,
 } from "../../services/notificationService";
 
 const navItems = [
@@ -91,6 +92,34 @@ const Navbar = () => {
 
     loadNotifications();
   }, [user]);
+
+  const handleNotificationClick = async (notification) => {
+    if (notification.isRead) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    try {
+      await markNotificationAsRead(notification._id, token);
+
+      setNotifications((prev) =>
+        prev.map((item) =>
+          item._id === notification._id
+            ? { ...item, isRead: true }
+            : item
+        )
+      );
+
+      setUnreadCount((prev) => Math.max(prev - 1, 0));
+    } catch (error) {
+      console.error("Mark notification as read error:", error);
+    }
+  };
 
   const closeMenu = () => {
     setShowMenu(false);
@@ -190,7 +219,12 @@ const Navbar = () => {
                             notifications.map((notification) => (
                               <div
                                 key={notification._id}
-                                className={`border-b border-border px-4 py-4 last:border-b-0 ${
+                                onClick={() =>
+                                  handleNotificationClick(
+                                    notification
+                                  )
+                                }
+                                className={`cursor-pointer border-b border-border px-4 py-4 last:border-b-0 ${
                                   !notification.isRead
                                     ? "bg-primary/5"
                                     : "bg-surface"
@@ -329,7 +363,12 @@ const Navbar = () => {
                           notifications.map((notification) => (
                             <div
                               key={notification._id}
-                              className={`border-b border-border px-4 py-3 last:border-b-0 ${
+                              onClick={() =>
+                                handleNotificationClick(
+                                  notification
+                                )
+                              }
+                              className={`cursor-pointer border-b border-border px-4 py-3 last:border-b-0 ${
                                 !notification.isRead
                                   ? "bg-primary/5"
                                   : "bg-surface"
