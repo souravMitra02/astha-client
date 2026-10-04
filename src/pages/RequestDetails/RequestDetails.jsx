@@ -8,6 +8,7 @@ const RequestDetails = () => {
 
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchRequest = async () => {
@@ -16,6 +17,11 @@ const RequestDetails = () => {
         setRequest(data.request);
       } catch (error) {
         console.error("Failed to fetch request:", error);
+
+        setError(
+          error.response?.data?.message ||
+            "Request-এর তথ্য পাওয়া যায়নি।"
+        );
       } finally {
         setLoading(false);
       }
@@ -61,65 +67,89 @@ const RequestDetails = () => {
   };
 
   if (loading) {
-  return (
-    <div className="min-h-screen bg-background px-4 py-8">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-5 h-10 w-24 animate-pulse rounded-lg bg-border" />
+    return (
+      <div className="min-h-screen bg-background px-4 py-8">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-5 h-10 w-24 animate-pulse rounded-lg bg-border" />
 
-        <div className="mb-6 space-y-2">
-          <div className="h-8 w-64 animate-pulse rounded bg-border" />
-          <div className="h-4 w-80 animate-pulse rounded bg-border" />
-        </div>
-
-        <div className="rounded-xl border border-border bg-surface p-6">
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="space-y-3">
-              <div className="h-6 w-40 animate-pulse rounded bg-border" />
-              <div className="h-4 w-72 animate-pulse rounded bg-border" />
-            </div>
-
-            <div className="h-7 w-20 animate-pulse rounded-full bg-border" />
+          <div className="mb-6 space-y-2">
+            <div className="h-8 w-64 animate-pulse rounded bg-border" />
+            <div className="h-4 w-80 animate-pulse rounded bg-border" />
           </div>
 
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <div className="h-4 w-20 animate-pulse rounded bg-border" />
-              <div className="h-5 w-48 animate-pulse rounded bg-border" />
+          <div className="rounded-xl border border-border bg-surface p-6">
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div className="space-y-3">
+                <div className="h-6 w-40 animate-pulse rounded bg-border" />
+                <div className="h-4 w-72 animate-pulse rounded bg-border" />
+              </div>
+
+              <div className="h-7 w-20 animate-pulse rounded-full bg-border" />
             </div>
 
-            <div className="space-y-2">
-              <div className="h-4 w-20 animate-pulse rounded bg-border" />
-              <div className="h-5 w-32 animate-pulse rounded bg-border" />
-            </div>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="h-4 w-20 animate-pulse rounded bg-border" />
+                <div className="h-5 w-48 animate-pulse rounded bg-border" />
+              </div>
 
-            <div className="border-t border-border pt-5">
-              <div className="mb-3 h-4 w-20 animate-pulse rounded bg-border" />
+              <div className="space-y-2">
+                <div className="h-4 w-20 animate-pulse rounded bg-border" />
+                <div className="h-5 w-32 animate-pulse rounded bg-border" />
+              </div>
 
-              <div className="rounded-xl border border-border bg-background p-4">
-                <div className="space-y-4">
-                  <div className="h-10 w-48 animate-pulse rounded bg-border" />
-                  <div className="h-10 w-64 animate-pulse rounded bg-border" />
-                  <div className="h-10 w-48 animate-pulse rounded bg-border" />
+              <div className="border-t border-border pt-5">
+                <div className="mb-3 h-4 w-20 animate-pulse rounded bg-border" />
+
+                <div className="rounded-xl border border-border bg-background p-4">
+                  <div className="space-y-4">
+                    <div className="h-10 w-48 animate-pulse rounded bg-border" />
+                    <div className="h-10 w-64 animate-pulse rounded bg-border" />
+                    <div className="h-10 w-48 animate-pulse rounded bg-border" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="border-t border-border pt-5">
-              <div className="mb-3 h-4 w-24 animate-pulse rounded bg-border" />
+              <div className="border-t border-border pt-5">
+                <div className="mb-3 h-4 w-24 animate-pulse rounded bg-border" />
 
-              <div className="h-20 w-full animate-pulse rounded-lg bg-border" />
-            </div>
+                <div className="h-20 w-full animate-pulse rounded-lg bg-border" />
+              </div>
 
-            <div className="border-t border-border pt-5">
-              <div className="h-4 w-24 animate-pulse rounded bg-border" />
-              <div className="mt-2 h-5 w-full animate-pulse rounded bg-border" />
+              <div className="border-t border-border pt-5">
+                <div className="h-4 w-24 animate-pulse rounded bg-border" />
+                <div className="mt-2 h-5 w-full animate-pulse rounded bg-border" />
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 text-center">
+          <h1 className="font-heading text-xl font-bold text-text">
+            Request পাওয়া যায়নি
+          </h1>
+
+          <p className="mt-2 font-bengali text-sm text-text-muted">
+            {error}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => window.history.back()}
+            className="mt-5 rounded-lg bg-primary px-4 py-2 font-bengali text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+          >
+            ফিরে যান
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-4 py-8">
