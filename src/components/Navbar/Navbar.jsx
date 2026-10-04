@@ -4,7 +4,10 @@ import { Bell, Menu, X } from "lucide-react";
 import LoginModal from "../LoginModal/LoginModal";
 import RegisterModal from "../RegisterModal/RegisterModal";
 import useAuth from "../../hooks/useAuth";
-import { getUnreadNotificationCount } from "../../services/notificationService";
+import {
+  getMyNotifications,
+  getUnreadNotificationCount,
+} from "../../services/notificationService";
 
 const navItems = [
   { name: "হোম", path: "/" },
@@ -19,6 +22,8 @@ const Navbar = () => {
   const [showRegister, setShowRegister] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -61,6 +66,32 @@ const Navbar = () => {
     loadUnreadCount();
   }, [user]);
 
+  useEffect(() => {
+    const loadNotifications = async () => {
+      if (!user) {
+        setNotifications([]);
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setNotifications([]);
+        return;
+      }
+
+      try {
+        const data = await getMyNotifications(token);
+
+        setNotifications(data.notifications || []);
+      } catch (error) {
+        console.error("Notifications load error:", error);
+      }
+    };
+
+    loadNotifications();
+  }, [user]);
+
   const closeMenu = () => {
     setShowMenu(false);
   };
@@ -68,6 +99,8 @@ const Navbar = () => {
   const handleLogout = () => {
     logout();
     setUnreadCount(0);
+    setNotifications([]);
+    setShowNotifications(false);
     closeMenu();
   };
 
@@ -108,19 +141,90 @@ const Navbar = () => {
               {user ? (
                 <>
                   {/* Notification */}
-                  <button
-                    type="button"
-                    className="relative rounded-lg p-2.5 text-text-muted transition-colors hover:bg-background hover:text-primary"
-                    aria-label="নোটিফিকেশন"
-                  >
-                    <Bell size={20} />
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowNotifications((prev) => !prev)
+                      }
+                      className="relative rounded-lg p-2.5 text-text-muted transition-colors hover:bg-background hover:text-primary"
+                      aria-label="নোটিফিকেশন"
+                    >
+                      <Bell size={20} />
 
-                    {unreadCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 font-bengali text-[10px] font-bold text-surface">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
+                      {unreadCount > 0 && (
+                        <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 font-bengali text-[10px] font-bold text-surface">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Notification Dropdown */}
+                    {showNotifications && (
+                      <div className="absolute right-0 top-full z-50 mt-3 w-80 overflow-hidden rounded-2xl border border-border bg-surface shadow-xl">
+                        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                          <h3 className="font-heading text-base font-bold text-text">
+                            নোটিফিকেশন
+                          </h3>
+
+                          {notifications.length > 0 && (
+                            <span className="font-bengali text-xs text-text-muted">
+                              {notifications.length}টি
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="max-h-96 overflow-y-auto">
+                          {notifications.length === 0 ? (
+                            <div className="px-5 py-10 text-center">
+                              <Bell
+                                size={28}
+                                className="mx-auto text-text-muted"
+                              />
+
+                              <p className="mt-3 font-bengali text-sm text-text-muted">
+                                কোনো নোটিফিকেশন নেই
+                              </p>
+                            </div>
+                          ) : (
+                            notifications.map((notification) => (
+                              <div
+                                key={notification._id}
+                                className={`border-b border-border px-4 py-4 last:border-b-0 ${
+                                  !notification.isRead
+                                    ? "bg-primary/5"
+                                    : "bg-surface"
+                                }`}
+                              >
+                                <div className="flex gap-3">
+                                  <div className="mt-1 shrink-0">
+                                    <Bell
+                                      size={17}
+                                      className={
+                                        notification.isRead
+                                          ? "text-text-muted"
+                                          : "text-primary"
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className="min-w-0">
+                                    <h4 className="font-bengali text-sm font-semibold text-text">
+                                      {notification.title}
+                                    </h4>
+
+                                    <p className="mt-1 font-bengali text-xs leading-5 text-text-muted">
+                                      {notification.message}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
                     )}
-                  </button>
+                  </div>
 
                   <Link
                     to="/dashboard"
@@ -160,7 +264,9 @@ const Navbar = () => {
               type="button"
               onClick={() => setShowMenu((prev) => !prev)}
               className="rounded-lg p-2 text-text transition-colors hover:bg-background hover:text-primary md:hidden"
-              aria-label={showMenu ? "মেনু বন্ধ করুন" : "মেনু খুলুন"}
+              aria-label={
+                showMenu ? "মেনু বন্ধ করুন" : "মেনু খুলুন"
+              }
               aria-expanded={showMenu}
             >
               {showMenu ? (
@@ -193,6 +299,9 @@ const Navbar = () => {
                     {/* Mobile Notification */}
                     <button
                       type="button"
+                      onClick={() =>
+                        setShowNotifications((prev) => !prev)
+                      }
                       className="flex items-center justify-between rounded-lg px-3 py-2.5 font-bengali text-sm font-medium text-text transition-colors hover:bg-background hover:text-primary"
                     >
                       <span className="flex items-center gap-2">
@@ -206,6 +315,38 @@ const Navbar = () => {
                         </span>
                       )}
                     </button>
+
+                    {/* Mobile Notification List */}
+                    {showNotifications && (
+                      <div className="overflow-hidden rounded-xl border border-border bg-background">
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-6 text-center">
+                            <p className="font-bengali text-sm text-text-muted">
+                              কোনো নোটিফিকেশন নেই
+                            </p>
+                          </div>
+                        ) : (
+                          notifications.map((notification) => (
+                            <div
+                              key={notification._id}
+                              className={`border-b border-border px-4 py-3 last:border-b-0 ${
+                                !notification.isRead
+                                  ? "bg-primary/5"
+                                  : "bg-surface"
+                              }`}
+                            >
+                              <h4 className="font-bengali text-sm font-semibold text-text">
+                                {notification.title}
+                              </h4>
+
+                              <p className="mt-1 font-bengali text-xs leading-5 text-text-muted">
+                                {notification.message}
+                              </p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
 
                     <Link
                       to="/dashboard"
