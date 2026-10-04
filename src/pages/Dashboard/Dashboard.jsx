@@ -113,15 +113,15 @@ const Dashboard = () => {
   const totalRequests = requests.length;
 
   const pendingRequests = requests.filter(
-    (r) => r.status === "pending"
+    (request) => request.status === "pending"
   ).length;
 
   const acceptedRequests = requests.filter(
-    (r) => r.status === "accepted"
+    (request) => request.status === "accepted"
   ).length;
 
   const rejectedRequests = requests.filter(
-    (r) => r.status === "rejected"
+    (request) => request.status === "rejected"
   ).length;
 
   const summaryCards = [
@@ -141,62 +141,67 @@ const Dashboard = () => {
       title: "গৃহীত",
       value: acceptedRequests,
       icon: CheckCircle2,
-      bgClass:
-        "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+      bgClass: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
     },
     {
       title: "প্রত্যাখ্যাত",
       value: rejectedRequests,
       icon: XCircle,
-      bgClass:
-        "bg-rose-500/10 text-rose-600 border-rose-500/20",
+      bgClass: "bg-rose-500/10 text-rose-600 border-rose-500/20",
     },
   ];
 
-  const getStatusBadge = (status) => {
+  const getStatusConfig = (status) => {
     switch (status) {
       case "accepted":
-        return (
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 font-bengali text-xs font-semibold text-emerald-600">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-            গৃহীত
-          </span>
-        );
+        return {
+          label: "গৃহীত",
+          message: "সেবাদাতা আপনার অনুরোধটি গ্রহণ করেছেন।",
+          badgeClass:
+            "border-success/20 bg-success/10 text-success",
+          dotClass: "bg-success",
+          cardClass:
+            "border-success/20 hover:border-success/30",
+        };
 
       case "rejected":
-        return (
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 font-bengali text-xs font-semibold text-rose-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-            প্রত্যাখ্যাত
-          </span>
-        );
+        return {
+          label: "প্রত্যাখ্যাত",
+          message: "সেবাদাতা এই অনুরোধটি গ্রহণ করতে পারেননি।",
+          badgeClass:
+            "border-danger/20 bg-danger/10 text-danger",
+          dotClass: "bg-danger",
+          cardClass:
+            "border-danger/20 hover:border-danger/30",
+        };
 
       default:
-        return (
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 font-bengali text-xs font-semibold text-amber-600">
-            <span className="h-1.5 w-1.5 animate-ping rounded-full bg-amber-500" />
-            অপেক্ষমাণ
-          </span>
-        );
+        return {
+          label: "অপেক্ষমাণ",
+          message: "সেবাদাতা আপনার অনুরোধটি পর্যালোচনা করছেন।",
+          badgeClass:
+            "border-primary/20 bg-primary/10 text-primary",
+          dotClass: "bg-primary",
+          cardClass:
+            "border-primary/20 hover:border-primary/30",
+        };
     }
   };
 
   return (
-    <main className="min-h-screen bg-slate-50/50 py-4 dark:bg-background sm:py-8">
+    <main className="min-h-screen bg-background py-4 sm:py-8">
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
-        {/* Navigation & Back Button */}
         <div className="mb-4 sm:mb-6">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3.5 py-2 font-bengali text-xs font-medium text-text transition-all hover:bg-background hover:shadow-xs active:scale-95 sm:text-sm"
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3.5 py-2 font-bengali text-xs font-medium text-text-muted transition-all hover:bg-background hover:text-primary hover:shadow-xs active:scale-95 sm:text-sm"
           >
             <ArrowLeft size={16} />
             <span>হোমে ফিরে যান</span>
           </Link>
         </div>
 
-        {/* Banner Section */}
-        <section className="relative overflow-hidden rounded-2xl border border-border bg-surface p-4 shadow-sm transition-all hover:shadow-md sm:rounded-3xl sm:p-8">
+        <section className="relative overflow-hidden rounded-2xl border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md sm:rounded-3xl sm:p-8">
           <div className="relative z-10 max-w-2xl">
             <span className="inline-block rounded-full bg-primary/10 px-3 py-1 font-bengali text-xs font-semibold text-primary">
               ড্যাশবোর্ড ওভারভিউ
@@ -217,7 +222,6 @@ const Dashboard = () => {
           <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary/5 blur-3xl sm:h-40 sm:w-40" />
         </section>
 
-        {/* Responsive Summary Stats Grid */}
         <section className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-4">
           {summaryCards.map((card) => {
             const Icon = card.icon;
@@ -252,7 +256,6 @@ const Dashboard = () => {
           })}
         </section>
 
-        {/* Requests List Section */}
         <section className="mt-8 sm:mt-10">
           <div className="flex flex-row items-center justify-between gap-2 border-b border-border/60 pb-3 sm:pb-4">
             <div>
@@ -278,7 +281,6 @@ const Dashboard = () => {
             </span>
           </div>
 
-          {/* Loading Skeleton */}
           {loading ? (
             <div className="mt-4 space-y-3 sm:mt-6 sm:space-y-4">
               {[1, 2].map((item) => (
@@ -288,7 +290,6 @@ const Dashboard = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="h-5 w-36 rounded-lg bg-border/50 sm:w-48" />
-
                     <div className="h-5 w-16 rounded-full bg-border/50 sm:w-20" />
                   </div>
 
@@ -299,7 +300,6 @@ const Dashboard = () => {
               ))}
             </div>
           ) : requests.length === 0 ? (
-            /* Empty State */
             <div className="mt-6 rounded-2xl border border-dashed border-border/80 bg-surface px-4 py-12 text-center sm:mt-8 sm:py-16">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/5 text-primary sm:h-16 sm:w-16">
                 <Inbox className="h-6 w-6 sm:h-8 sm:w-8" />
@@ -316,148 +316,173 @@ const Dashboard = () => {
               </p>
             </div>
           ) : (
-            /* Request List */
-            <div className="mt-4 space-y-3 sm:mt-6 sm:space-y-4">
-              {requests.map((request) => (
-                <article
-                  key={request._id}
-                  className="group rounded-xl border border-border bg-surface p-4 shadow-xs transition-all duration-200 hover:border-primary/20 hover:shadow-md sm:rounded-2xl sm:p-6"
-                >
-                  <div className="flex flex-col gap-3 sm:gap-4">
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-2.5 sm:gap-3.5">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-10 sm:w-10">
-                          <Wrench size={18} className="sm:hidden" />
-                          <Wrench size={20} className="hidden sm:block" />
+            <div className="mt-4 space-y-4 sm:mt-6 sm:space-y-5">
+              {requests.map((request) => {
+                const statusConfig = getStatusConfig(request.status);
+
+                return (
+                  <article
+                    key={request._id}
+                    className={`group overflow-hidden rounded-2xl border bg-surface shadow-xs transition-all duration-200 hover:shadow-md ${statusConfig.cardClass}`}
+                  >
+                    <div className="p-4 sm:p-6">
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-start gap-2.5 sm:gap-3.5">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-10 sm:w-10">
+                              <Wrench size={18} />
+                            </div>
+
+                            <div className="min-w-0">
+                              <h3 className="font-heading text-base font-bold leading-snug text-text sm:text-lg">
+                                {request.serviceTitle || "সেবা অনুরোধ"}
+                              </h3>
+
+                              {request.serviceCategory && (
+                                <span className="mt-0.5 block font-bengali text-xs text-text-muted">
+                                  {request.serviceCategory}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <span
+                            className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 font-bengali text-xs font-semibold ${statusConfig.badgeClass}`}
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${statusConfig.dotClass} ${
+                                request.status === "pending"
+                                  ? "animate-pulse"
+                                  : ""
+                              }`}
+                            />
+                            {statusConfig.label}
+                          </span>
+                        </div>
+
+                        <div
+                          className={`rounded-xl border px-3.5 py-2.5 font-bengali text-xs sm:px-4 sm:py-3 sm:text-sm ${statusConfig.badgeClass}`}
+                        >
+                          {statusConfig.message}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border/50 pt-3 font-bengali text-xs text-text-muted">
+                          <div className="flex items-center gap-1.5">
+                            <UserRound
+                              size={14}
+                              className="shrink-0 text-primary"
+                            />
+
+                            <span>
+                              {user?.role === "provider"
+                                ? "গ্রাহক: "
+                                : "সেবাদাতা: "}
+
+                              <strong className="font-semibold text-text">
+                                {user?.role === "provider"
+                                  ? request.userName || "অজানা গ্রাহক"
+                                  : request.providerName || "অজানা সেবাদাতা"}
+                              </strong>
+                            </span>
+                          </div>
+
+                          {request.createdAt && (
+                            <div className="flex items-center gap-1.5">
+                              <Calendar
+                                size={14}
+                                className="shrink-0"
+                              />
+
+                              <span>
+                                {new Date(
+                                  request.createdAt
+                                ).toLocaleDateString("bn-BD", {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                })}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         <div>
-                          <h3 className="font-heading text-base font-bold leading-snug text-text sm:text-lg">
-                            {request.serviceTitle || "সেবা অনুরোধ"}
-                          </h3>
+                          <p className="mb-2 font-bengali text-xs font-semibold text-text-muted">
+                            আপনার বার্তা
+                          </p>
 
-                          {request.serviceCategory && (
-                            <span className="inline-block font-bengali text-xs text-text-muted">
-                              শ্রেণী: {request.serviceCategory}
-                            </span>
+                          <div className="rounded-xl border border-border bg-background p-3.5 sm:p-4">
+                            <p className="font-bengali text-xs leading-7 text-text sm:text-sm">
+                              {request.message ||
+                                "কোনো অতিরিক্ত বার্তা নেই।"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-border/50 pt-4">
+                          <Link
+                            to={`/requests/${request._id}`}
+                            className="flex w-full items-center justify-center rounded-xl border border-border bg-surface px-3 py-2.5 font-bengali text-xs font-semibold text-text transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary active:scale-[0.99] sm:text-sm"
+                          >
+                            বিস্তারিত দেখুন
+                          </Link>
+                        </div>
+
+                        {user?.role === "provider" &&
+                          request.status === "pending" && (
+                            <div className="grid grid-cols-2 gap-2.5 border-t border-border/50 pt-4">
+                              <button
+                                type="button"
+                                disabled={updatingId === request._id}
+                                onClick={() =>
+                                  handleStatusUpdate(
+                                    request._id,
+                                    "accepted"
+                                  )
+                                }
+                                className="flex items-center justify-center gap-1.5 rounded-xl bg-success px-3 py-2.5 font-bengali text-xs font-semibold text-white shadow-xs transition-all hover:bg-success/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2 sm:text-sm"
+                              >
+                                {updatingId === request._id ? (
+                                  <Loader2
+                                    size={15}
+                                    className="animate-spin"
+                                  />
+                                ) : (
+                                  <CheckCircle2 size={15} />
+                                )}
+
+                                <span>গ্রহণ করুন</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={updatingId === request._id}
+                                onClick={() =>
+                                  handleStatusUpdate(
+                                    request._id,
+                                    "rejected"
+                                  )
+                                }
+                                className="flex items-center justify-center gap-1.5 rounded-xl bg-danger px-3 py-2.5 font-bengali text-xs font-semibold text-white shadow-xs transition-all hover:bg-danger/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2 sm:text-sm"
+                              >
+                                {updatingId === request._id ? (
+                                  <Loader2
+                                    size={15}
+                                    className="animate-spin"
+                                  />
+                                ) : (
+                                  <XCircle size={15} />
+                                )}
+
+                                <span>প্রত্যাখ্যান</span>
+                              </button>
+                            </div>
                           )}
-                        </div>
-                      </div>
-
-                      {/* Status Badge */}
-                      <div className="shrink-0">
-                        {getStatusBadge(request.status)}
                       </div>
                     </div>
-
-                    {/* Metadata */}
-                    <div className="flex flex-wrap items-center gap-3 border-t border-border/40 pt-2.5 font-bengali text-xs text-text-muted sm:gap-4 sm:pt-3">
-                      <div className="flex items-center gap-1.5">
-                        <UserRound size={14} className="text-primary" />
-
-                        <span>
-                          {user?.role === "provider"
-                            ? "গ্রাহক: "
-                            : "সেবাদাতা: "}
-
-                          <strong className="font-semibold text-text">
-                            {user?.role === "provider"
-                              ? request.userName || "অজানা গ্রাহক"
-                              : request.providerName || "অজানা সেবাদাতা"}
-                          </strong>
-                        </span>
-                      </div>
-
-                      {request.createdAt && (
-                        <div className="flex items-center gap-1.5">
-                          <Calendar size={14} />
-
-                          <span>
-                            {new Date(
-                              request.createdAt
-                            ).toLocaleDateString("bn-BD", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            })}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Message Box */}
-                    <div className="rounded-xl border border-border/40 bg-background/60 p-3 sm:p-3.5">
-                      <p className="font-bengali text-xs leading-relaxed text-text-muted sm:text-sm">
-                        {request.message ||
-                          "কোনো অতিরিক্ত বার্তা নেই।"}
-                      </p>
-                    </div>
-
-                    {/* Request Details Button */}
-                    <div className="pt-1 sm:pt-2">
-                      <Link
-                        to={`/requests/${request._id}`}
-                        className="flex w-full items-center justify-center rounded-xl border border-border bg-surface px-3 py-2 font-bengali text-xs font-semibold text-text transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary sm:py-2.5 sm:text-sm"
-                      >
-                        বিস্তারিত দেখুন
-                      </Link>
-                    </div>
-
-                    {/* Provider Actions */}
-                    {user?.role === "provider" &&
-                      request.status === "pending" && (
-                        <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-                          <button
-                            type="button"
-                            disabled={updatingId === request._id}
-                            onClick={() =>
-                              handleStatusUpdate(
-                                request._id,
-                                "accepted"
-                              )
-                            }
-                            className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 font-bengali text-xs font-semibold text-white shadow-xs transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2 sm:py-2.5 sm:text-sm"
-                          >
-                            {updatingId === request._id ? (
-                              <Loader2
-                                size={15}
-                                className="animate-spin"
-                              />
-                            ) : (
-                              <CheckCircle2 size={15} />
-                            )}
-
-                            <span>গ্রহণ করুন</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={updatingId === request._id}
-                            onClick={() =>
-                              handleStatusUpdate(
-                                request._id,
-                                "rejected"
-                              )
-                            }
-                            className="flex items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-3 py-2 font-bengali text-xs font-semibold text-white shadow-xs transition-all hover:bg-rose-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2 sm:py-2.5 sm:text-sm"
-                          >
-                            {updatingId === request._id ? (
-                              <Loader2
-                                size={15}
-                                className="animate-spin"
-                              />
-                            ) : (
-                              <XCircle size={15} />
-                            )}
-
-                            <span>প্রত্যাখ্যান</span>
-                          </button>
-                        </div>
-                      )}
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
