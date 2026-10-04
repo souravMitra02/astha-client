@@ -4,7 +4,8 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import ServiceDetails from "../ServiceDetails/ServiceDetails";
 import Services from "../pages/Services/Services";
-
+import Providers from "../pages/Providers/Providers";
+import ProviderDetails from "../pages/ProviderDetails/ProviderDetails";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -12,7 +13,8 @@ const AppRoutes = () => {
 
       <Route path="/services" element={<Services />} />
       <Route path="/services/:id" element={<ServiceDetails />} />
-
+      <Route path="/providers" element={<Providers />} />
+      <Route path="/providers/:id" element={<ProviderDetails />} />
       <Route
         path="/dashboard"
         element={
