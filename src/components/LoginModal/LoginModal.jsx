@@ -121,7 +121,11 @@ const LoginModal = ({ onClose, onOpenRegister }) => {
                 onChange={handleChange}
                 placeholder="name@example.com"
                 required
-                className="w-full rounded-2xl border border-border bg-background/80 pl-11 pr-4 py-3 text-sm text-text outline-none transition-all placeholder:text-text-muted/50 focus:border-primary focus:bg-background focus:ring-4 focus:ring-primary/10"
+                className={`w-full rounded-2xl border bg-background/80 pl-11 pr-4 py-3 text-sm text-text outline-none transition-all placeholder:text-text-muted/50 focus:bg-background focus:ring-4 focus:ring-primary/10 ${
+  error
+    ? "border-danger focus:border-danger focus:ring-danger/10"
+    : "border-border focus:border-primary"
+}`}
               />
               <svg
                 className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted/60 pointer-events-none"
@@ -156,7 +160,11 @@ const LoginModal = ({ onClose, onOpenRegister }) => {
                 onChange={handleChange}
                 placeholder="••••••••"
                 required
-                className="w-full rounded-2xl border border-border bg-background/80 pl-11 pr-11 py-3 text-sm text-text outline-none transition-all placeholder:text-text-muted/50 focus:border-primary focus:bg-background focus:ring-4 focus:ring-primary/10"
+                className={`w-full rounded-2xl border bg-background/80 pl-11 pr-11 py-3 text-sm text-text outline-none transition-all placeholder:text-text-muted/50 focus:bg-background focus:ring-4 focus:ring-primary/10 ${
+  error
+    ? "border-danger focus:border-danger focus:ring-danger/10"
+    : "border-border focus:border-primary"
+}`}
               />
 
               {/* Left Lock Icon */}
@@ -225,7 +233,7 @@ const LoginModal = ({ onClose, onOpenRegister }) => {
               onClose();
               if (onOpenRegister) onOpenRegister();
             }}
-            className="font-semibold text-primary transition hover:underline"
+            className="font-semibold text-primary transition mt-2 hover:underline"
           >
             অ্যাকাউন্ট তৈরি করুন
           </button>
