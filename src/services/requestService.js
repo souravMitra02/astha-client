@@ -73,3 +73,19 @@ export const getSingleRequest = async (id) => {
 
   return response.data;
 };
+
+export const cancelRequest = async (requestId) => {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.patch(
+    `${API_URL}/${requestId}/cancel`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+};

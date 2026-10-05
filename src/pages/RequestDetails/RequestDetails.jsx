@@ -13,7 +13,11 @@ import {
   Wrench,
   XCircle,
 } from "lucide-react";
-import { getSingleRequest } from "../../services/requestService";
+import Swal from "sweetalert2";
+import {
+  cancelRequest,
+  getSingleRequest,
+} from "../../services/requestService";
 
 const RequestDetails = () => {
   const { id } = useParams();
@@ -22,6 +26,7 @@ const RequestDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     const fetchRequest = async () => {
@@ -65,6 +70,15 @@ const RequestDetails = () => {
       };
     }
 
+    if (status === "cancelled") {
+      return {
+        label: "বাতিল",
+        message: "আপনি এই অনুরোধটি বাতিল করেছেন।",
+        badgeClass: "border-danger/20 bg-danger/10 text-danger",
+        iconClass: "bg-danger text-white",
+      };
+    }
+
     return {
       label: "অপেক্ষমাণ",
       message: "সেবাদাতা আপনার অনুরোধটি পর্যালোচনা করছেন।",
@@ -80,6 +94,10 @@ const RequestDetails = () => {
 
     if (status === "rejected") {
       return "এই অনুরোধটি গ্রহণ করা হয়নি। প্রয়োজনে অন্য কোনো সেবাদাতার কাছ থেকে সেবা নিতে পারেন।";
+    }
+
+    if (status === "cancelled") {
+      return "এই অনুরোধটি আর প্রক্রিয়াধীন নেই। প্রয়োজনে নতুন করে কোনো সেবাদাতার কাছে অনুরোধ পাঠাতে পারেন।";
     }
 
     return "সেবাদাতা আপনার অনুরোধটি পর্যালোচনা করছেন। সিদ্ধান্ত নেওয়া হলে আপনি জানতে পারবেন।";
@@ -115,6 +133,57 @@ const RequestDetails = () => {
       }, 2000);
     } catch (error) {
       console.error("Copy request ID error:", error);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    const result = await Swal.fire({
+      title: "অনুরোধ বাতিল করবেন?",
+      text: "এই অনুরোধটি বাতিল করার পর আর পুনরায় চালু করা যাবে না।",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "হ্যাঁ, বাতিল করুন",
+      cancelButtonText: "না",
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      setCancelling(true);
+
+      await cancelRequest(request._id);
+
+      setRequest((prev) => ({
+        ...prev,
+        status: "cancelled",
+        updatedAt: new Date(),
+      }));
+
+      await Swal.fire({
+        icon: "success",
+        title: "অনুরোধ বাতিল হয়েছে",
+        text: "আপনার অনুরোধটি সফলভাবে বাতিল করা হয়েছে।",
+        confirmButtonText: "ঠিক আছে",
+        confirmButtonColor: "#2563eb",
+      });
+    } catch (error) {
+      console.error("Cancel request error:", error);
+
+      await Swal.fire({
+        icon: "error",
+        title: "সমস্যা হয়েছে",
+        text:
+          error.response?.data?.message ||
+          "Request বাতিল করা যায়নি। আবার চেষ্টা করুন।",
+        confirmButtonText: "ঠিক আছে",
+        confirmButtonColor: "#2563eb",
+      });
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -304,7 +373,8 @@ const RequestDetails = () => {
                 >
                   {request?.status === "accepted" ? (
                     <CheckCircle2 size={17} />
-                  ) : request?.status === "rejected" ? (
+                  ) : request?.status === "rejected" ||
+                    request?.status === "cancelled" ? (
                     <XCircle size={17} />
                   ) : (
                     <Clock3 size={17} />
@@ -316,7 +386,9 @@ const RequestDetails = () => {
                     ? "পর্যালোচনায়"
                     : request?.status === "accepted"
                       ? "গৃহীত"
-                      : "প্রত্যাখ্যাত"}
+                      : request?.status === "rejected"
+                        ? "প্রত্যাখ্যাত"
+                        : "বাতিল"}
                 </p>
               </div>
 
@@ -524,6 +596,41 @@ const RequestDetails = () => {
                 </div>
               </section>
 
+              {/* Pending Action */}
+              {request?.status === "pending" && (
+                <section className="border-t border-border pt-6">
+                  <div className="rounded-xl border border-danger/20 bg-danger/5 p-4">
+                    <p className="font-bengali text-sm font-semibold text-text">
+                      অনুরোধ বাতিল করতে চান?
+                    </p>
+
+                    <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
+                      সেবাদাতা এখনো আপনার অনুরোধটি গ্রহণ করেননি। প্রয়োজন না থাকলে
+                      আপনি এটি বাতিল করতে পারেন।
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={handleCancelRequest}
+                      disabled={cancelling}
+                      className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-danger px-4 py-2.5 font-bengali text-xs font-semibold text-white transition-colors hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {cancelling ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                          বাতিল করা হচ্ছে...
+                        </>
+                      ) : (
+                        <>
+                          <XCircle size={15} />
+                          অনুরোধ বাতিল করুন
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </section>
+              )}
+
               {/* Accepted Action */}
               {request?.status === "accepted" && (
                 <section className="border-t border-border pt-6">
@@ -533,7 +640,8 @@ const RequestDetails = () => {
                     </p>
 
                     <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
-                      সেবাদাতার সাথে যোগাযোগ করে সেবার সময় ও প্রয়োজনীয় বিষয়গুলো নিশ্চিত করুন।
+                      সেবাদাতার সাথে যোগাযোগ করে সেবার সময় ও প্রয়োজনীয় বিষয়গুলো
+                      নিশ্চিত করুন।
                     </p>
 
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -570,7 +678,31 @@ const RequestDetails = () => {
                     </p>
 
                     <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
-                      আপনার প্রয়োজন অনুযায়ী অন্য কোনো সেবাদাতার কাছ থেকে অনুরোধ পাঠাতে পারেন।
+                      আপনার প্রয়োজন অনুযায়ী অন্য কোনো সেবাদাতার কাছ থেকে অনুরোধ
+                      পাঠাতে পারেন।
+                    </p>
+
+                    <Link
+                      to="/providers"
+                      className="mt-3 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 font-bengali text-xs font-semibold text-white transition-colors hover:bg-primary-hover"
+                    >
+                      সেবাদাতা দেখুন
+                    </Link>
+                  </div>
+                </section>
+              )}
+
+              {/* Cancelled Action */}
+              {request?.status === "cancelled" && (
+                <section className="border-t border-border pt-6">
+                  <div className="rounded-xl border border-border bg-background p-4">
+                    <p className="font-bengali text-sm font-semibold text-text">
+                      অনুরোধটি বাতিল করা হয়েছে
+                    </p>
+
+                    <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
+                      প্রয়োজন হলে নতুন কোনো সেবাদাতার কাছে আবার অনুরোধ পাঠাতে
+                      পারেন।
                     </p>
 
                     <Link
