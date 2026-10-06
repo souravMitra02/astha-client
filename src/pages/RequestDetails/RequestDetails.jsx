@@ -61,6 +61,15 @@ const RequestDetails = () => {
       };
     }
 
+    if (status === "completed") {
+      return {
+        label: "সম্পন্ন",
+        message: "সেবাদাতা আপনার অনুরোধটি সম্পন্ন করেছেন।",
+        badgeClass: "border-success/20 bg-success/10 text-success",
+        iconClass: "bg-success text-white",
+      };
+    }
+
     if (status === "rejected") {
       return {
         label: "প্রত্যাখ্যাত",
@@ -90,6 +99,10 @@ const RequestDetails = () => {
   const getStatusMessage = (status) => {
     if (status === "accepted") {
       return "এখন সেবাদাতার সাথে যোগাযোগ করে সেবার সময় ও অন্যান্য বিষয় নিশ্চিত করতে পারেন।";
+    }
+
+    if (status === "completed") {
+      return "সেবাদাতা আপনার সেবার অনুরোধটি সফলভাবে সম্পন্ন করেছেন।";
     }
 
     if (status === "rejected") {
@@ -345,6 +358,7 @@ const RequestDetails = () => {
             </p>
 
             <div className="flex items-start">
+              {/* Submitted */}
               <div className="flex flex-1 flex-col items-center">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white">
                   <Check size={17} />
@@ -355,6 +369,7 @@ const RequestDetails = () => {
                 </p>
               </div>
 
+              {/* Submitted → Review */}
               <div
                 className={`mt-4 h-0.5 flex-1 ${
                   request?.status === "pending"
@@ -363,6 +378,7 @@ const RequestDetails = () => {
                 }`}
               />
 
+              {/* Review / Accepted / Rejected / Cancelled */}
               <div className="flex flex-1 flex-col items-center">
                 <div
                   className={`flex h-9 w-9 items-center justify-center rounded-full ${
@@ -371,7 +387,8 @@ const RequestDetails = () => {
                       : statusConfig.iconClass
                   }`}
                 >
-                  {request?.status === "accepted" ? (
+                  {request?.status === "accepted" ||
+                  request?.status === "completed" ? (
                     <CheckCircle2 size={17} />
                   ) : request?.status === "rejected" ||
                     request?.status === "cancelled" ? (
@@ -384,7 +401,8 @@ const RequestDetails = () => {
                 <p className="mt-2 text-center font-bengali text-xs font-medium text-text">
                   {request?.status === "pending"
                     ? "পর্যালোচনায়"
-                    : request?.status === "accepted"
+                    : request?.status === "accepted" ||
+                      request?.status === "completed"
                       ? "গৃহীত"
                       : request?.status === "rejected"
                         ? "প্রত্যাখ্যাত"
@@ -392,14 +410,34 @@ const RequestDetails = () => {
                 </p>
               </div>
 
-              <div className="mt-4 h-0.5 flex-1 bg-border" />
+              {/* Review → Completed */}
+              <div
+                className={`mt-4 h-0.5 flex-1 ${
+                  request?.status === "completed"
+                    ? "bg-success"
+                    : "bg-border"
+                }`}
+              />
 
+              {/* Completed */}
               <div className="flex flex-1 flex-col items-center">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-border text-text-muted">
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-full ${
+                    request?.status === "completed"
+                      ? "bg-success text-white"
+                      : "bg-border text-text-muted"
+                  }`}
+                >
                   <CheckCircle2 size={17} />
                 </div>
 
-                <p className="mt-2 text-center font-bengali text-xs font-medium text-text-muted">
+                <p
+                  className={`mt-2 text-center font-bengali text-xs font-medium ${
+                    request?.status === "completed"
+                      ? "text-success"
+                      : "text-text-muted"
+                  }`}
+                >
                   সম্পন্ন
                 </p>
               </div>
@@ -664,6 +702,30 @@ const RequestDetails = () => {
                           ইমেইল করুন
                         </a>
                       )}
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* Completed Action */}
+              {request?.status === "completed" && (
+                <section className="border-t border-border pt-6">
+                  <div className="rounded-xl border border-success/20 bg-success/5 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
+                        <CheckCircle2 size={18} />
+                      </div>
+
+                      <div>
+                        <p className="font-bengali text-sm font-semibold text-text">
+                          সেবা সম্পন্ন হয়েছে
+                        </p>
+
+                        <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
+                          সেবাদাতা আপনার অনুরোধটি সফলভাবে সম্পন্ন করেছেন। এই
+                          অনুরোধের আর কোনো status পরিবর্তনের প্রয়োজন নেই।
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </section>

@@ -52,19 +52,26 @@ const Dashboard = () => {
 
   const handleStatusUpdate = async (requestId, status) => {
     const isAccepting = status === "accepted";
+    const isCompleting = status === "completed";
 
     const result = await Swal.fire({
       title: isAccepting
         ? "অনুরোধটি গ্রহণ করবেন?"
-        : "অনুরোধটি প্রত্যাখ্যান করবেন?",
+        : isCompleting
+          ? "সেবাটি সম্পন্ন করবেন?"
+          : "অনুরোধটি প্রত্যাখ্যান করবেন?",
       text: isAccepting
         ? "এই সেবার অনুরোধটি গ্রহণ করলে গ্রাহককে জানানো হবে।"
-        : "এই সেবার অনুরোধটি প্রত্যাখ্যান করলে গ্রাহককে জানানো হবে।",
+        : isCompleting
+          ? "সেবাটি সম্পন্ন হয়েছে নিশ্চিত করলে গ্রাহককে জানানো হবে।"
+          : "এই সেবার অনুরোধটি প্রত্যাখ্যান করলে গ্রাহককে জানানো হবে।",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: isAccepting
         ? "হ্যাঁ, গ্রহণ করুন"
-        : "হ্যাঁ, প্রত্যাখ্যান করুন",
+        : isCompleting
+          ? "হ্যাঁ, সম্পন্ন করুন"
+          : "হ্যাঁ, প্রত্যাখ্যান করুন",
       cancelButtonText: "বাতিল",
       reverseButtons: true,
     });
@@ -89,10 +96,14 @@ const Dashboard = () => {
       await Swal.fire({
         title: isAccepting
           ? "অনুরোধ গৃহীত"
-          : "অনুরোধ প্রত্যাখ্যাত",
+          : isCompleting
+            ? "সেবা সম্পন্ন হয়েছে"
+            : "অনুরোধ প্রত্যাখ্যাত",
         text: isAccepting
           ? "সেবার অনুরোধটি সফলভাবে গ্রহণ করা হয়েছে।"
-          : "সেবার অনুরোধটি সফলভাবে প্রত্যাখ্যান করা হয়েছে।",
+          : isCompleting
+            ? "সেবার অনুরোধটি সফলভাবে সম্পন্ন করা হয়েছে।"
+            : "সেবার অনুরোধটি সফলভাবে প্রত্যাখ্যান করা হয়েছে।",
         icon: "success",
         confirmButtonText: "ঠিক আছে",
       });
@@ -101,7 +112,9 @@ const Dashboard = () => {
 
       await Swal.fire({
         title: "সমস্যা হয়েছে",
-        text: "অনুরোধের status পরিবর্তন করা যায়নি। আবার চেষ্টা করুন।",
+        text:
+          error.response?.data?.message ||
+          "অনুরোধের status পরিবর্তন করা যায়নি। আবার চেষ্টা করুন।",
         icon: "error",
         confirmButtonText: "ঠিক আছে",
       });
@@ -124,6 +137,10 @@ const Dashboard = () => {
     (request) => request.status === "rejected"
   ).length;
 
+  const completedRequests = requests.filter(
+    (request) => request.status === "completed"
+  ).length;
+
   const summaryCards = [
     {
       title: "মোট অনুরোধ",
@@ -142,6 +159,12 @@ const Dashboard = () => {
       value: acceptedRequests,
       icon: CheckCircle2,
       bgClass: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    },
+    {
+      title: "সম্পন্ন",
+      value: completedRequests,
+      icon: CheckCircle2,
+      bgClass: "bg-success/10 text-success border-success/20",
     },
     {
       title: "প্রত্যাখ্যাত",
@@ -164,10 +187,32 @@ const Dashboard = () => {
             "border-success/20 hover:border-success/30",
         };
 
+      case "completed":
+        return {
+          label: "সম্পন্ন",
+          message: "এই সেবার অনুরোধটি সফলভাবে সম্পন্ন হয়েছে।",
+          badgeClass:
+            "border-success/20 bg-success/10 text-success",
+          dotClass: "bg-success",
+          cardClass:
+            "border-success/20 hover:border-success/30",
+        };
+
       case "rejected":
         return {
           label: "প্রত্যাখ্যাত",
           message: "সেবাদাতা এই অনুরোধটি গ্রহণ করতে পারেননি।",
+          badgeClass:
+            "border-danger/20 bg-danger/10 text-danger",
+          dotClass: "bg-danger",
+          cardClass:
+            "border-danger/20 hover:border-danger/30",
+        };
+
+      case "cancelled":
+        return {
+          label: "বাতিল",
+          message: "এই অনুরোধটি বাতিল করা হয়েছে।",
           badgeClass:
             "border-danger/20 bg-danger/10 text-danger",
           dotClass: "bg-danger",
@@ -222,7 +267,7 @@ const Dashboard = () => {
           <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary/5 blur-3xl sm:h-40 sm:w-40" />
         </section>
 
-        <section className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-4">
+        <section className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-5">
           {summaryCards.map((card) => {
             const Icon = card.icon;
 
@@ -267,7 +312,7 @@ const Dashboard = () => {
 
               <p className="mt-0.5 hidden font-bengali text-xs text-text-muted sm:block sm:text-sm">
                 {user?.role === "provider"
-                  ? "গ্রাহকদের সার্ভিস রিকুয়েস্ট গ্রহণ বা প্রত্যাখ্যান করুন।"
+                  ? "গ্রাহকদের সার্ভিস রিকুয়েস্ট গ্রহণ, প্রত্যাখ্যান বা সম্পন্ন করুন।"
                   : "আপনার পাঠানো সার্ভিস রিকুয়েস্টগুলোর বর্তমান স্ট্যাটাস দেখুন।"}
               </p>
             </div>
@@ -356,6 +401,7 @@ const Dashboard = () => {
                                   : ""
                               }`}
                             />
+
                             {statusConfig.label}
                           </span>
                         </div>
@@ -475,6 +521,34 @@ const Dashboard = () => {
                                 )}
 
                                 <span>প্রত্যাখ্যান</span>
+                              </button>
+                            </div>
+                          )}
+
+                        {user?.role === "provider" &&
+                          request.status === "accepted" && (
+                            <div className="border-t border-border/50 pt-4">
+                              <button
+                                type="button"
+                                disabled={updatingId === request._id}
+                                onClick={() =>
+                                  handleStatusUpdate(
+                                    request._id,
+                                    "completed"
+                                  )
+                                }
+                                className="flex w-full items-center justify-center gap-2 rounded-xl bg-success px-3 py-2.5 font-bengali text-xs font-semibold text-white shadow-xs transition-all hover:bg-success/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+                              >
+                                {updatingId === request._id ? (
+                                  <Loader2
+                                    size={16}
+                                    className="animate-spin"
+                                  />
+                                ) : (
+                                  <CheckCircle2 size={16} />
+                                )}
+
+                                <span>সেবা সম্পন্ন করুন</span>
                               </button>
                             </div>
                           )}
