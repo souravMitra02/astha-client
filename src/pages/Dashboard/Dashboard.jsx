@@ -15,13 +15,17 @@ import {
   MessageSquare,
 } from "lucide-react";
 import Swal from "sweetalert2";
+
 import useAuth from "../../hooks/useAuth";
+
 import {
   getMyRequests,
   getProviderRequests,
   getProviderStats,
   updateRequestStatus,
 } from "../../services/requestService";
+
+import ProviderServices from "../../components/ProviderServices/ProviderServices";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -41,11 +45,10 @@ const Dashboard = () => {
         if (user?.role === "provider") {
           setStatsLoading(true);
 
-          const [requestsData, statsData] =
-            await Promise.all([
-              getProviderRequests(),
-              getProviderStats(),
-            ]);
+          const [requestsData, statsData] = await Promise.all([
+            getProviderRequests(),
+            getProviderStats(),
+          ]);
 
           setRequests(requestsData.requests || []);
           setStats(statsData.stats || null);
@@ -69,10 +72,7 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const handleStatusUpdate = async (
-    requestId,
-    status
-  ) => {
+  const handleStatusUpdate = async (requestId, status) => {
     const isAccepting = status === "accepted";
     const isCompleting = status === "completed";
 
@@ -82,18 +82,22 @@ const Dashboard = () => {
         : isCompleting
           ? "সেবাটি সম্পন্ন করবেন?"
           : "অনুরোধটি প্রত্যাখ্যান করবেন?",
+
       text: isAccepting
         ? "এই সেবার অনুরোধটি গ্রহণ করলে গ্রাহককে জানানো হবে।"
         : isCompleting
           ? "সেবাটি সম্পন্ন হয়েছে নিশ্চিত করলে গ্রাহককে জানানো হবে।"
           : "এই সেবার অনুরোধটি প্রত্যাখ্যান করলে গ্রাহককে জানানো হবে।",
+
       icon: "warning",
       showCancelButton: true,
+
       confirmButtonText: isAccepting
         ? "হ্যাঁ, গ্রহণ করুন"
         : isCompleting
           ? "হ্যাঁ, সম্পন্ন করুন"
           : "হ্যাঁ, প্রত্যাখ্যান করুন",
+
       cancelButtonText: "বাতিল",
       reverseButtons: true,
     });
@@ -105,10 +109,7 @@ const Dashboard = () => {
     try {
       setUpdatingId(requestId);
 
-      await updateRequestStatus(
-        requestId,
-        status
-      );
+      await updateRequestStatus(requestId, status);
 
       setRequests((prevRequests) =>
         prevRequests.map((request) =>
@@ -133,25 +134,26 @@ const Dashboard = () => {
           : isCompleting
             ? "সেবা সম্পন্ন হয়েছে"
             : "অনুরোধ প্রত্যাখ্যাত",
+
         text: isAccepting
           ? "সেবার অনুরোধটি সফলভাবে গ্রহণ করা হয়েছে।"
           : isCompleting
             ? "সেবার অনুরোধটি সফলভাবে সম্পন্ন করা হয়েছে।"
             : "সেবার অনুরোধটি সফলভাবে প্রত্যাখ্যান করা হয়েছে।",
+
         icon: "success",
         confirmButtonText: "ঠিক আছে",
       });
     } catch (error) {
-      console.error(
-        "Status update error:",
-        error
-      );
+      console.error("Status update error:", error);
 
       await Swal.fire({
         title: "সমস্যা হয়েছে",
+
         text:
           error.response?.data?.message ||
           "অনুরোধের status পরিবর্তন করা যায়নি। আবার চেষ্টা করুন।",
+
         icon: "error",
         confirmButtonText: "ঠিক আছে",
       });
@@ -163,28 +165,23 @@ const Dashboard = () => {
   const totalRequests = requests.length;
 
   const pendingRequests = requests.filter(
-    (request) =>
-      request.status === "pending"
+    (request) => request.status === "pending"
   ).length;
 
   const acceptedRequests = requests.filter(
-    (request) =>
-      request.status === "accepted"
+    (request) => request.status === "accepted"
   ).length;
 
   const rejectedRequests = requests.filter(
-    (request) =>
-      request.status === "rejected"
+    (request) => request.status === "rejected"
   ).length;
 
   const completedRequests = requests.filter(
-    (request) =>
-      request.status === "completed"
+    (request) => request.status === "completed"
   ).length;
 
   const cancelledRequests = requests.filter(
-    (request) =>
-      request.status === "cancelled"
+    (request) => request.status === "cancelled"
   ).length;
 
   const providerSummaryCards = [
@@ -192,8 +189,7 @@ const Dashboard = () => {
       title: "মোট অনুরোধ",
       value: stats?.totalRequests ?? 0,
       icon: ClipboardList,
-      bgClass:
-        "bg-primary/10 text-primary border-primary/20",
+      bgClass: "bg-primary/10 text-primary border-primary/20",
     },
     {
       title: "অপেক্ষমাণ",
@@ -213,8 +209,7 @@ const Dashboard = () => {
       title: "সম্পন্ন",
       value: stats?.completedRequests ?? 0,
       icon: CheckCircle2,
-      bgClass:
-        "bg-success/10 text-success border-success/20",
+      bgClass: "bg-success/10 text-success border-success/20",
     },
     {
       title: "প্রত্যাখ্যাত",
@@ -227,15 +222,13 @@ const Dashboard = () => {
       title: "বাতিল",
       value: stats?.cancelledRequests ?? 0,
       icon: XCircle,
-      bgClass:
-        "bg-danger/10 text-danger border-danger/20",
+      bgClass: "bg-danger/10 text-danger border-danger/20",
     },
     {
       title: "মোট Review",
       value: stats?.totalReviews ?? 0,
       icon: MessageSquare,
-      bgClass:
-        "bg-primary/10 text-primary border-primary/20",
+      bgClass: "bg-primary/10 text-primary border-primary/20",
     },
   ];
 
@@ -244,8 +237,7 @@ const Dashboard = () => {
       title: "মোট অনুরোধ",
       value: totalRequests,
       icon: ClipboardList,
-      bgClass:
-        "bg-primary/10 text-primary border-primary/20",
+      bgClass: "bg-primary/10 text-primary border-primary/20",
     },
     {
       title: "অপেক্ষমাণ",
@@ -265,8 +257,7 @@ const Dashboard = () => {
       title: "সম্পন্ন",
       value: completedRequests,
       icon: CheckCircle2,
-      bgClass:
-        "bg-success/10 text-success border-success/20",
+      bgClass: "bg-success/10 text-success border-success/20",
     },
     {
       title: "প্রত্যাখ্যাত",
@@ -288,7 +279,7 @@ const Dashboard = () => {
         return {
           label: "গৃহীত",
           message:
-            "সেবাদাতা আপনার অনুরোধটি গ্রহণ করেছেন।",
+            "সেবাদাতা আপনার অনুরোধটি গ্রহণ করেছেন.",
           badgeClass:
             "border-success/20 bg-success/10 text-success",
           dotClass: "bg-success",
@@ -494,6 +485,12 @@ const Dashboard = () => {
           </section>
         )}
 
+        {user?.role === "provider" && (
+          <section className="mt-8 sm:mt-10">
+            <ProviderServices />
+          </section>
+        )}
+
         <section className="mt-8 sm:mt-10">
           <div className="flex flex-row items-center justify-between gap-2 border-b border-border/60 pb-3 sm:pb-4">
             <div>
@@ -559,9 +556,7 @@ const Dashboard = () => {
             <div className="mt-4 space-y-4 sm:mt-6 sm:space-y-5">
               {requests.map((request) => {
                 const statusConfig =
-                  getStatusConfig(
-                    request.status
-                  );
+                  getStatusConfig(request.status);
 
                 return (
                   <article
@@ -584,9 +579,7 @@ const Dashboard = () => {
 
                               {request.serviceCategory && (
                                 <span className="mt-0.5 block font-bengali text-xs text-text-muted">
-                                  {
-                                    request.serviceCategory
-                                  }
+                                  {request.serviceCategory}
                                 </span>
                               )}
                             </div>
@@ -596,9 +589,10 @@ const Dashboard = () => {
                             className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 font-bengali text-xs font-semibold ${statusConfig.badgeClass}`}
                           >
                             <span
-                              className={`h-1.5 w-1.5 rounded-full ${statusConfig.dotClass} ${
-                                request.status ===
-                                "pending"
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                statusConfig.dotClass
+                              } ${
+                                request.status === "pending"
                                   ? "animate-pulse"
                                   : ""
                               }`}
@@ -622,14 +616,12 @@ const Dashboard = () => {
                             />
 
                             <span>
-                              {user?.role ===
-                              "provider"
+                              {user?.role === "provider"
                                 ? "গ্রাহক: "
                                 : "সেবাদাতা: "}
 
                               <strong className="font-semibold text-text">
-                                {user?.role ===
-                                "provider"
+                                {user?.role === "provider"
                                   ? request.userName ||
                                     "অজানা গ্রাহক"
                                   : request.providerName ||
@@ -683,16 +675,13 @@ const Dashboard = () => {
                           </Link>
                         </div>
 
-                        {user?.role ===
-                          "provider" &&
-                          request.status ===
-                            "pending" && (
+                        {user?.role === "provider" &&
+                          request.status === "pending" && (
                             <div className="grid grid-cols-2 gap-2.5 border-t border-border/50 pt-4">
                               <button
                                 type="button"
                                 disabled={
-                                  updatingId ===
-                                  request._id
+                                  updatingId === request._id
                                 }
                                 onClick={() =>
                                   handleStatusUpdate(
@@ -702,28 +691,22 @@ const Dashboard = () => {
                                 }
                                 className="flex items-center justify-center gap-1.5 rounded-xl bg-success px-3 py-2.5 font-bengali text-xs font-semibold text-white shadow-xs transition-all hover:bg-success/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2 sm:text-sm"
                               >
-                                {updatingId ===
-                                request._id ? (
+                                {updatingId === request._id ? (
                                   <Loader2
                                     size={15}
                                     className="animate-spin"
                                   />
                                 ) : (
-                                  <CheckCircle2
-                                    size={15}
-                                  />
+                                  <CheckCircle2 size={15} />
                                 )}
 
-                                <span>
-                                  গ্রহণ করুন
-                                </span>
+                                <span>গ্রহণ করুন</span>
                               </button>
 
                               <button
                                 type="button"
                                 disabled={
-                                  updatingId ===
-                                  request._id
+                                  updatingId === request._id
                                 }
                                 onClick={() =>
                                   handleStatusUpdate(
@@ -733,35 +716,27 @@ const Dashboard = () => {
                                 }
                                 className="flex items-center justify-center gap-1.5 rounded-xl bg-danger px-3 py-2.5 font-bengali text-xs font-semibold text-white shadow-xs transition-all hover:bg-danger/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2 sm:text-sm"
                               >
-                                {updatingId ===
-                                request._id ? (
+                                {updatingId === request._id ? (
                                   <Loader2
                                     size={15}
                                     className="animate-spin"
                                   />
                                 ) : (
-                                  <XCircle
-                                    size={15}
-                                  />
+                                  <XCircle size={15} />
                                 )}
 
-                                <span>
-                                  প্রত্যাখ্যান
-                                </span>
+                                <span>প্রত্যাখ্যান</span>
                               </button>
                             </div>
                           )}
 
-                        {user?.role ===
-                          "provider" &&
-                          request.status ===
-                            "accepted" && (
+                        {user?.role === "provider" &&
+                          request.status === "accepted" && (
                             <div className="border-t border-border/50 pt-4">
                               <button
                                 type="button"
                                 disabled={
-                                  updatingId ===
-                                  request._id
+                                  updatingId === request._id
                                 }
                                 onClick={() =>
                                   handleStatusUpdate(
@@ -771,16 +746,13 @@ const Dashboard = () => {
                                 }
                                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-success px-3 py-2.5 font-bengali text-xs font-semibold text-white shadow-xs transition-all hover:bg-success/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
                               >
-                                {updatingId ===
-                                request._id ? (
+                                {updatingId === request._id ? (
                                   <Loader2
                                     size={16}
                                     className="animate-spin"
                                   />
                                 ) : (
-                                  <CheckCircle2
-                                    size={16}
-                                  />
+                                  <CheckCircle2 size={16} />
                                 )}
 
                                 <span>
