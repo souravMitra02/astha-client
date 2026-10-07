@@ -9,24 +9,44 @@ import {
   Copy,
   Mail,
   Phone,
+  Star,
   User,
   Wrench,
   XCircle,
 } from "lucide-react";
 import Swal from "sweetalert2";
+
+import useAuth from "../../hooks/useAuth";
+
 import {
   cancelRequest,
   getSingleRequest,
 } from "../../services/requestService";
 
+import {
+  createReview,
+  getRequestReview,
+} from "../../services/reviewService";
+
 const RequestDetails = () => {
   const { id } = useParams();
+  const { user } = useAuth();
 
   const [request, setRequest] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [copied, setCopied] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+
+  const [review, setReview] = useState(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     const fetchRequest = async () => {
@@ -35,6 +55,7 @@ const RequestDetails = () => {
         setError("");
 
         const data = await getSingleRequest(id);
+
         setRequest(data.request);
       } catch (error) {
         console.error("Failed to fetch request:", error);
@@ -51,12 +72,35 @@ const RequestDetails = () => {
     fetchRequest();
   }, [id]);
 
+  useEffect(() => {
+    const fetchReview = async () => {
+      if (!id || request?.status !== "completed") {
+        return;
+      }
+
+      try {
+        setReviewLoading(true);
+
+        const data = await getRequestReview(id);
+
+        setReview(data.review || null);
+      } catch (error) {
+        console.error("Failed to fetch review:", error);
+      } finally {
+        setReviewLoading(false);
+      }
+    };
+
+    fetchReview();
+  }, [id, request?.status]);
+
   const getStatusConfig = (status) => {
     if (status === "accepted") {
       return {
         label: "গৃহীত",
         message: "সেবাদাতা আপনার অনুরোধটি গ্রহণ করেছেন।",
-        badgeClass: "border-success/20 bg-success/10 text-success",
+        badgeClass:
+          "border-success/20 bg-success/10 text-success",
         iconClass: "bg-success text-white",
       };
     }
@@ -65,7 +109,8 @@ const RequestDetails = () => {
       return {
         label: "সম্পন্ন",
         message: "সেবাদাতা আপনার অনুরোধটি সম্পন্ন করেছেন।",
-        badgeClass: "border-success/20 bg-success/10 text-success",
+        badgeClass:
+          "border-success/20 bg-success/10 text-success",
         iconClass: "bg-success text-white",
       };
     }
@@ -74,7 +119,8 @@ const RequestDetails = () => {
       return {
         label: "প্রত্যাখ্যাত",
         message: "সেবাদাতা এই অনুরোধটি গ্রহণ করতে পারেননি।",
-        badgeClass: "border-danger/20 bg-danger/10 text-danger",
+        badgeClass:
+          "border-danger/20 bg-danger/10 text-danger",
         iconClass: "bg-danger text-white",
       };
     }
@@ -83,7 +129,8 @@ const RequestDetails = () => {
       return {
         label: "বাতিল",
         message: "আপনি এই অনুরোধটি বাতিল করেছেন।",
-        badgeClass: "border-danger/20 bg-danger/10 text-danger",
+        badgeClass:
+          "border-danger/20 bg-danger/10 text-danger",
         iconClass: "bg-danger text-white",
       };
     }
@@ -91,7 +138,8 @@ const RequestDetails = () => {
     return {
       label: "অপেক্ষমাণ",
       message: "সেবাদাতা আপনার অনুরোধটি পর্যালোচনা করছেন।",
-      badgeClass: "border-primary/20 bg-primary/10 text-primary",
+      badgeClass:
+        "border-primary/20 bg-primary/10 text-primary",
       iconClass: "bg-primary text-white",
     };
   };
@@ -102,7 +150,7 @@ const RequestDetails = () => {
     }
 
     if (status === "completed") {
-      return "সেবাদাতা আপনার সেবার অনুরোধটি সফলভাবে সম্পন্ন করেছেন।";
+      return "সেবাটি সম্পন্ন হয়েছে। চাইলে এখন আপনার অভিজ্ঞতা সম্পর্কে rating ও review দিতে পারেন।";
     }
 
     if (status === "rejected") {
@@ -200,7 +248,111 @@ const RequestDetails = () => {
     }
   };
 
-  const statusConfig = getStatusConfig(request?.status);
+  const handleSubmitReview = async (event) => {
+    event.preventDefault();
+
+    if (rating === 0) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Rating দিন",
+        text: "Review submit করার আগে ১ থেকে ৫ star-এর মধ্যে একটি rating দিন।",
+        confirmButtonText: "ঠিক আছে",
+      });
+
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+
+      const data = await createReview(
+        request._id,
+        rating,
+        comment
+      );
+
+      setReview(data.review);
+
+      setRating(0);
+      setHoverRating(0);
+      setComment("");
+
+      await Swal.fire({
+        icon: "success",
+        title: "Review দেওয়া হয়েছে",
+        text: "আপনার rating ও review সফলভাবে সংরক্ষণ করা হয়েছে।",
+        confirmButtonText: "ঠিক আছে",
+      });
+    } catch (error) {
+      console.error("Submit review error:", error);
+
+      await Swal.fire({
+        icon: "error",
+        title: "সমস্যা হয়েছে",
+        text:
+          error.response?.data?.message ||
+          "Review submit করা যায়নি। আবার চেষ্টা করুন।",
+        confirmButtonText: "ঠিক আছে",
+      });
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const renderStars = (value, interactive = false) => {
+    return (
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => {
+          const activeValue = interactive
+            ? hoverRating || rating
+            : value;
+
+          const isActive = star <= activeValue;
+
+          if (interactive) {
+            return (
+              <button
+                key={star}
+                type="button"
+                onMouseEnter={() => setHoverRating(star)}
+                onMouseLeave={() => setHoverRating(0)}
+                onClick={() => setRating(star)}
+                className="rounded-md p-1 text-amber-400 transition-transform hover:scale-110"
+                aria-label={`${star} star rating`}
+              >
+                <Star
+                  size={28}
+                  fill={
+                    isActive
+                      ? "currentColor"
+                      : "none"
+                  }
+                  strokeWidth={1.8}
+                />
+              </button>
+            );
+          }
+
+          return (
+            <Star
+              key={star}
+              size={18}
+              className={
+                isActive
+                  ? "text-amber-400"
+                  : "text-border"
+              }
+              fill={
+                isActive
+                  ? "currentColor"
+                  : "none"
+              }
+            />
+          );
+        })}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -287,6 +439,11 @@ const RequestDetails = () => {
     );
   }
 
+  const statusConfig = getStatusConfig(request?.status);
+
+  const isCompleted =
+    request?.status === "completed";
+
   return (
     <main className="min-h-screen bg-background px-4 py-6 sm:py-8">
       <div className="mx-auto max-w-3xl">
@@ -320,7 +477,8 @@ const RequestDetails = () => {
 
                 <div className="min-w-0">
                   <h2 className="font-heading text-lg font-bold text-text sm:text-xl">
-                    {request?.serviceTitle || "সেবা অনুরোধ"}
+                    {request?.serviceTitle ||
+                      "সেবা অনুরোধ"}
                   </h2>
 
                   {request?.serviceCategory && (
@@ -358,7 +516,6 @@ const RequestDetails = () => {
             </p>
 
             <div className="flex items-start">
-              {/* Submitted */}
               <div className="flex flex-1 flex-col items-center">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white">
                   <Check size={17} />
@@ -369,7 +526,6 @@ const RequestDetails = () => {
                 </p>
               </div>
 
-              {/* Submitted → Review */}
               <div
                 className={`mt-4 h-0.5 flex-1 ${
                   request?.status === "pending"
@@ -378,7 +534,6 @@ const RequestDetails = () => {
                 }`}
               />
 
-              {/* Review / Accepted / Rejected / Cancelled */}
               <div className="flex flex-1 flex-col items-center">
                 <div
                   className={`flex h-9 w-9 items-center justify-center rounded-full ${
@@ -402,7 +557,7 @@ const RequestDetails = () => {
                   {request?.status === "pending"
                     ? "পর্যালোচনায়"
                     : request?.status === "accepted" ||
-                      request?.status === "completed"
+                        request?.status === "completed"
                       ? "গৃহীত"
                       : request?.status === "rejected"
                         ? "প্রত্যাখ্যাত"
@@ -410,7 +565,6 @@ const RequestDetails = () => {
                 </p>
               </div>
 
-              {/* Review → Completed */}
               <div
                 className={`mt-4 h-0.5 flex-1 ${
                   request?.status === "completed"
@@ -419,7 +573,6 @@ const RequestDetails = () => {
                 }`}
               />
 
-              {/* Completed */}
               <div className="flex flex-1 flex-col items-center">
                 <div
                   className={`flex h-9 w-9 items-center justify-center rounded-full ${
@@ -485,7 +638,10 @@ const RequestDetails = () => {
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                        <User size={18} className="text-primary" />
+                        <User
+                          size={18}
+                          className="text-primary"
+                        />
                       </div>
 
                       <div className="min-w-0">
@@ -494,7 +650,8 @@ const RequestDetails = () => {
                         </p>
 
                         <p className="mt-0.5 font-bengali text-sm font-semibold text-text">
-                          {request?.providerName || "অজানা সেবাদাতা"}
+                          {request?.providerName ||
+                            "অজানা সেবাদাতা"}
                         </p>
                       </div>
                     </div>
@@ -502,7 +659,10 @@ const RequestDetails = () => {
                     {request?.providerEmail && (
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                          <Mail size={18} className="text-primary" />
+                          <Mail
+                            size={18}
+                            className="text-primary"
+                          />
                         </div>
 
                         <div className="min-w-0">
@@ -523,7 +683,10 @@ const RequestDetails = () => {
                     {request?.providerPhone && (
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                          <Phone size={18} className="text-primary" />
+                          <Phone
+                            size={18}
+                            className="text-primary"
+                          />
                         </div>
 
                         <div>
@@ -552,7 +715,8 @@ const RequestDetails = () => {
 
                 <div className="rounded-xl border border-border bg-background p-4">
                   <p className="font-bengali text-sm leading-7 text-text">
-                    {request?.message || "কোনো বার্তা দেওয়া হয়নি।"}
+                    {request?.message ||
+                      "কোনো বার্তা দেওয়া হয়নি।"}
                   </p>
                 </div>
               </section>
@@ -607,7 +771,9 @@ const RequestDetails = () => {
                         </p>
 
                         <p className="mt-1 font-bengali text-sm text-text">
-                          {formatDateTime(request.createdAt)}
+                          {formatDateTime(
+                            request.createdAt
+                          )}
                         </p>
                       </div>
                     </div>
@@ -626,7 +792,9 @@ const RequestDetails = () => {
                         </p>
 
                         <p className="mt-1 font-bengali text-sm text-text">
-                          {formatDateTime(request.updatedAt)}
+                          {formatDateTime(
+                            request.updatedAt
+                          )}
                         </p>
                       </div>
                     </div>
@@ -634,7 +802,7 @@ const RequestDetails = () => {
                 </div>
               </section>
 
-              {/* Pending Action */}
+              {/* Pending */}
               {request?.status === "pending" && (
                 <section className="border-t border-border pt-6">
                   <div className="rounded-xl border border-danger/20 bg-danger/5 p-4">
@@ -643,8 +811,9 @@ const RequestDetails = () => {
                     </p>
 
                     <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
-                      সেবাদাতা এখনো আপনার অনুরোধটি গ্রহণ করেননি। প্রয়োজন না থাকলে
-                      আপনি এটি বাতিল করতে পারেন।
+                      সেবাদাতা এখনো আপনার অনুরোধটি গ্রহণ
+                      করেননি। প্রয়োজন না থাকলে আপনি এটি বাতিল
+                      করতে পারেন।
                     </p>
 
                     <button
@@ -669,7 +838,7 @@ const RequestDetails = () => {
                 </section>
               )}
 
-              {/* Accepted Action */}
+              {/* Accepted */}
               {request?.status === "accepted" && (
                 <section className="border-t border-border pt-6">
                   <div className="rounded-xl border border-success/20 bg-success/5 p-4">
@@ -678,8 +847,8 @@ const RequestDetails = () => {
                     </p>
 
                     <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
-                      সেবাদাতার সাথে যোগাযোগ করে সেবার সময় ও প্রয়োজনীয় বিষয়গুলো
-                      নিশ্চিত করুন।
+                      সেবাদাতার সাথে যোগাযোগ করে সেবার সময় ও
+                      প্রয়োজনীয় বিষয়গুলো নিশ্চিত করুন।
                     </p>
 
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -707,8 +876,8 @@ const RequestDetails = () => {
                 </section>
               )}
 
-              {/* Completed Action */}
-              {request?.status === "completed" && (
+              {/* Completed */}
+              {isCompleted && (
                 <section className="border-t border-border pt-6">
                   <div className="rounded-xl border border-success/20 bg-success/5 p-4">
                     <div className="flex items-start gap-3">
@@ -722,8 +891,8 @@ const RequestDetails = () => {
                         </p>
 
                         <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
-                          সেবাদাতা আপনার অনুরোধটি সফলভাবে সম্পন্ন করেছেন। এই
-                          অনুরোধের আর কোনো status পরিবর্তনের প্রয়োজন নেই।
+                          সেবাদাতা আপনার অনুরোধটি সফলভাবে
+                          সম্পন্ন করেছেন।
                         </p>
                       </div>
                     </div>
@@ -731,7 +900,156 @@ const RequestDetails = () => {
                 </section>
               )}
 
-              {/* Rejected Action */}
+              {/* Review */}
+              {isCompleted && (
+                <section className="border-t border-border pt-6">
+                  <div className="rounded-2xl border border-border bg-background p-4 sm:p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
+                        <Star
+                          size={20}
+                          fill="currentColor"
+                        />
+                      </div>
+
+                      <div>
+                        <h3 className="font-bengali text-sm font-semibold text-text">
+                          সেবার অভিজ্ঞতা কেমন ছিল?
+                        </h3>
+
+                        <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
+                          আপনার rating ও review অন্য ব্যবহারকারীদের
+                          সঠিক সেবাদাতা বেছে নিতে সাহায্য করবে।
+                        </p>
+                      </div>
+                    </div>
+
+                    {reviewLoading ? (
+                      <div className="mt-5 space-y-3">
+                        <div className="h-7 w-40 animate-pulse rounded bg-border" />
+                        <div className="h-20 w-full animate-pulse rounded-xl bg-border" />
+                      </div>
+                    ) : review ? (
+                      <div className="mt-5 rounded-xl border border-border bg-surface p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="font-bengali text-xs text-text-muted">
+                              {user?.role === "user"
+                                ? "আপনার review"
+                                : "Customer review"}
+                            </p>
+
+                            <div className="mt-2">
+                              {renderStars(review.rating)}
+                            </div>
+                          </div>
+
+                          {review.createdAt && (
+                            <p className="font-bengali text-xs text-text-muted">
+                              {formatDateTime(
+                                review.createdAt
+                              )}
+                            </p>
+                          )}
+                        </div>
+
+                        {review.comment && (
+                          <div className="mt-4 border-t border-border pt-4">
+                            <p className="font-bengali text-sm leading-7 text-text">
+                              {review.comment}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ) : user?.role === "user" ? (
+                      <form
+                        onSubmit={handleSubmitReview}
+                        className="mt-5 space-y-5"
+                      >
+                        <div>
+                          <p className="font-bengali text-sm font-semibold text-text">
+                            আপনার rating
+                          </p>
+
+                          <div className="mt-2 flex items-center gap-1">
+                            {renderStars(
+                              rating,
+                              true
+                            )}
+                          </div>
+
+                          {rating > 0 && (
+                            <p className="mt-1 font-bengali text-xs text-text-muted">
+                              {rating} / 5
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="review-comment"
+                            className="font-bengali text-sm font-semibold text-text"
+                          >
+                            আপনার মতামত
+                            <span className="ml-1 font-normal text-text-muted">
+                              (ঐচ্ছিক)
+                            </span>
+                          </label>
+
+                          <textarea
+                            id="review-comment"
+                            value={comment}
+                            onChange={(event) =>
+                              setComment(
+                                event.target.value
+                              )
+                            }
+                            maxLength={500}
+                            rows={4}
+                            placeholder="সেবাদাতার সম্পর্কে আপনার অভিজ্ঞতা লিখুন..."
+                            className="mt-2 w-full resize-none rounded-xl border border-border bg-surface px-4 py-3 font-bengali text-sm text-text outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/10"
+                          />
+
+                          <div className="mt-1 flex justify-end">
+                            <span className="font-bengali text-xs text-text-muted">
+                              {comment.length}/500
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={
+                            submittingReview ||
+                            rating === 0
+                          }
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bengali text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                        >
+                          {submittingReview ? (
+                            <>
+                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                              Review দেওয়া হচ্ছে...
+                            </>
+                          ) : (
+                            <>
+                              <Star size={16} />
+                              Review দিন
+                            </>
+                          )}
+                        </button>
+                      </form>
+                    ) : (
+                      <div className="mt-5 rounded-xl border border-border bg-surface p-4">
+                        <p className="font-bengali text-sm text-text-muted">
+                          Customer এখনো কোনো review দেননি।
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {/* Rejected */}
               {request?.status === "rejected" && (
                 <section className="border-t border-border pt-6">
                   <div className="rounded-xl border border-danger/20 bg-danger/5 p-4">
@@ -740,8 +1058,8 @@ const RequestDetails = () => {
                     </p>
 
                     <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
-                      আপনার প্রয়োজন অনুযায়ী অন্য কোনো সেবাদাতার কাছ থেকে অনুরোধ
-                      পাঠাতে পারেন।
+                      আপনার প্রয়োজন অনুযায়ী অন্য কোনো
+                      সেবাদাতার কাছ থেকে অনুরোধ পাঠাতে পারেন।
                     </p>
 
                     <Link
@@ -754,7 +1072,7 @@ const RequestDetails = () => {
                 </section>
               )}
 
-              {/* Cancelled Action */}
+              {/* Cancelled */}
               {request?.status === "cancelled" && (
                 <section className="border-t border-border pt-6">
                   <div className="rounded-xl border border-border bg-background p-4">
@@ -763,8 +1081,8 @@ const RequestDetails = () => {
                     </p>
 
                     <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
-                      প্রয়োজন হলে নতুন কোনো সেবাদাতার কাছে আবার অনুরোধ পাঠাতে
-                      পারেন।
+                      প্রয়োজন হলে নতুন কোনো সেবাদাতার কাছে
+                      আবার অনুরোধ পাঠাতে পারেন।
                     </p>
 
                     <Link

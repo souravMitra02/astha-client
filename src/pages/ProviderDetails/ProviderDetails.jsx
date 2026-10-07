@@ -1,8 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { BriefcaseBusiness, MapPin, Phone, X } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  MapPin,
+  Phone,
+  Star,
+  User,
+  X,
+} from "lucide-react";
 import Swal from "sweetalert2";
+
+import { getProviderReviews } from "../../services/reviewService";
 
 const categoryLabels = {
   electrician: "ইলেকট্রিশিয়ান",
@@ -17,24 +26,48 @@ const ProviderDetails = () => {
 
   const [provider, setProvider] = useState(null);
   const [services, setServices] = useState([]);
+
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+
   const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+
   const [error, setError] = useState("");
+  const [reviewsError, setReviewsError] = useState("");
+
   const [requestMessage, setRequestMessage] = useState("");
-  const [selectedService, setSelectedService] = useState(null);
+  const [selectedService, setSelectedService] =
+    useState(null);
 
   useEffect(() => {
     const getProviderDetails = async () => {
       try {
-        const [providerResponse, servicesResponse] = await Promise.all([
-          axios.get(`http://localhost:5000/api/users/providers/${id}`),
-          axios.get(`http://localhost:5000/api/services/provider/${id}`),
-        ]);
+        setLoading(true);
+        setError("");
+
+        const [providerResponse, servicesResponse] =
+          await Promise.all([
+            axios.get(
+              `http://localhost:5000/api/users/providers/${id}`
+            ),
+            axios.get(
+              `http://localhost:5000/api/services/provider/${id}`
+            ),
+          ]);
 
         setProvider(providerResponse.data.provider);
         setServices(servicesResponse.data.services);
       } catch (error) {
-        console.error("Provider details fetch error:", error);
-        setError("সেবাদাতার তথ্য আনতে সমস্যা হয়েছে");
+        console.error(
+          "Provider details fetch error:",
+          error
+        );
+
+        setError(
+          "সেবাদাতার তথ্য আনতে সমস্যা হয়েছে"
+        );
       } finally {
         setLoading(false);
       }
@@ -43,54 +76,127 @@ const ProviderDetails = () => {
     getProviderDetails();
   }, [id]);
 
-const handleRequestSubmit = async () => {
-    if (!requestMessage.trim()) {
-       Swal.fire({
-      icon: "warning",
-      title: "বার্তা দিন",
-      text: "আপনার প্রয়োজন সম্পর্কে কিছু লিখুন।",
-      confirmButtonText: "ঠিক আছে",
-    });
-    return;
-  }
+  useEffect(() => {
+    const fetchProviderReviews = async () => {
+      try {
+        setReviewsLoading(true);
+        setReviewsError("");
 
-  try {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
-      "http://localhost:5000/api/requests",
-      {
-        serviceId: selectedService._id,
-        message: requestMessage,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        const data = await getProviderReviews(id);
+
+        setReviews(data.reviews || []);
+        setAverageRating(data.averageRating || 0);
+        setTotalReviews(data.totalReviews || 0);
+      } catch (error) {
+        console.error(
+          "Provider reviews fetch error:",
+          error
+        );
+
+        setReviewsError(
+          error.response?.data?.message ||
+            "Review আনতে সমস্যা হয়েছে"
+        );
+      } finally {
+        setReviewsLoading(false);
       }
-      );
-      Swal.fire({
-      icon: "success",
-      title: "অনুরোধ পাঠানো হয়েছে",
-      text: response.data.message,
-      confirmButtonText: "ঠিক আছে",
-    });
+    };
 
-    setSelectedService(null);
-setRequestMessage("");
-  } catch (error) {
-  console.error("Request submit error:", error);
-  Swal.fire({
-      icon: "error",
-      title: "অনুরোধ পাঠানো যায়নি",
-      text:
-        error.response?.data?.message ||
-        "সেবার অনুরোধ পাঠাতে সমস্যা হয়েছে।",
-      confirmButtonText: "ঠিক আছে",
-    });
-}
-};    
-    
-    
+    fetchProviderReviews();
+  }, [id]);
+
+  const handleRequestSubmit = async () => {
+    if (!requestMessage.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "বার্তা দিন",
+        text: "আপনার প্রয়োজন সম্পর্কে কিছু লিখুন।",
+        confirmButtonText: "ঠিক আছে",
+      });
+
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await axios.post(
+        "http://localhost:5000/api/requests",
+        {
+          serviceId: selectedService._id,
+          message: requestMessage,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      Swal.fire({
+        icon: "success",
+        title: "অনুরোধ পাঠানো হয়েছে",
+        text: response.data.message,
+        confirmButtonText: "ঠিক আছে",
+      });
+
+      setSelectedService(null);
+      setRequestMessage("");
+    } catch (error) {
+      console.error(
+        "Request submit error:",
+        error
+      );
+
+      Swal.fire({
+        icon: "error",
+        title: "অনুরোধ পাঠানো যায়নি",
+        text:
+          error.response?.data?.message ||
+          "সেবার অনুরোধ পাঠাতে সমস্যা হয়েছে।",
+        confirmButtonText: "ঠিক আছে",
+      });
+    }
+  };
+
+  const formatReviewDate = (date) => {
+    if (!date) {
+      return "";
+    }
+
+    return new Date(date).toLocaleDateString(
+      "bn-BD",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }
+    );
+  };
+
+  const renderStars = (rating, size = 18) => {
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            size={size}
+            className={
+              star <= rating
+                ? "text-amber-400"
+                : "text-border"
+            }
+            fill={
+              star <= rating
+                ? "currentColor"
+                : "none"
+            }
+          />
+        ))}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <section className="bg-background py-12">
@@ -107,7 +213,9 @@ setRequestMessage("");
     return (
       <section className="bg-background py-12">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center font-bengali text-danger">{error}</p>
+          <p className="text-center font-bengali text-danger">
+            {error}
+          </p>
         </div>
       </section>
     );
@@ -117,62 +225,93 @@ setRequestMessage("");
     <section className="bg-background py-12">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {/* Provider Information */}
-        {/* Provider Information */}
-<div className="rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">
-  <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-    <div>
-      <p className="font-bengali text-sm font-medium text-primary">
-        সেবাদাতা
-      </p>
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-bengali text-sm font-medium text-primary">
+                সেবাদাতা
+              </p>
 
-      <h1 className="mt-2 font-heading text-3xl font-bold text-text sm:text-4xl">
-        {provider.name}
-      </h1>
-    </div>
+              <h1 className="mt-2 font-heading text-3xl font-bold text-text sm:text-4xl">
+                {provider.name}
+              </h1>
 
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 font-heading text-2xl font-bold text-primary">
-      {provider.name?.charAt(0)}
-    </div>
-  </div>
+              {/* Rating Summary */}
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                {totalReviews > 0 ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      {renderStars(
+                        Math.round(averageRating),
+                        17
+                      )}
 
-  <div className="mt-7 grid gap-4 sm:grid-cols-2">
-    <div className="rounded-xl bg-background p-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <BriefcaseBusiness className="h-5 w-5 text-primary" />
+                      <span className="font-heading text-sm font-bold text-text">
+                        {averageRating}
+                      </span>
+                    </div>
+
+                    <span className="text-text-muted">
+                      •
+                    </span>
+
+                    <span className="font-bengali text-sm text-text-muted">
+                      {totalReviews} টি review
+                    </span>
+                  </>
+                ) : (
+                  <span className="font-bengali text-sm text-text-muted">
+                    এখনো কোনো review নেই
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 font-heading text-2xl font-bold text-primary">
+              {provider.name?.charAt(0)}
+            </div>
+          </div>
+
+          <div className="mt-7 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl bg-background p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <BriefcaseBusiness className="h-5 w-5 text-primary" />
+                </div>
+
+                <div>
+                  <p className="font-bengali text-xs text-text-muted">
+                    কাজের ধরন
+                  </p>
+
+                  <p className="mt-1 font-bengali font-semibold text-text">
+                    {categoryLabels[
+                      provider.category
+                    ] || "সেবাদাতা"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-background p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Phone className="h-5 w-5 text-primary" />
+                </div>
+
+                <div>
+                  <p className="font-bengali text-xs text-text-muted">
+                    ফোন নম্বর
+                  </p>
+
+                  <p className="mt-1 font-bengali font-semibold text-text">
+                    {provider.phone}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <div>
-          <p className="font-bengali text-xs text-text-muted">
-            কাজের ধরন
-          </p>
-
-          <p className="mt-1 font-bengali font-semibold text-text">
-            {categoryLabels[provider.category] || "সেবাদাতা"}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div className="rounded-xl bg-background p-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <Phone className="h-5 w-5 text-primary" />
-        </div>
-
-        <div>
-          <p className="font-bengali text-xs text-text-muted">
-            ফোন নম্বর
-          </p>
-
-          <p className="mt-1 font-bengali font-semibold text-text">
-            {provider.phone}
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
         {/* Services */}
         <div className="mt-10">
@@ -187,54 +326,174 @@ setRequestMessage("");
           ) : (
             <div className="mt-6 grid gap-6 sm:grid-cols-2">
               {services.map((service) => (
-               <div
-  key={service._id}
-  className="flex h-full flex-col rounded-2xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md sm:p-7"
->
-  <div className="flex items-start justify-between gap-4">
-    <div>
-      <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 font-bengali text-xs font-semibold text-primary">
-        {categoryLabels[service.category] || service.category}
-      </span>
+                <div
+                  key={service._id}
+                  className="flex h-full flex-col rounded-2xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md sm:p-7"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 font-bengali text-xs font-semibold text-primary">
+                        {categoryLabels[
+                          service.category
+                        ] || service.category}
+                      </span>
 
-      <h3 className="mt-4 font-heading text-xl font-bold text-text">
-        {service.title}
-      </h3>
-    </div>
+                      <h3 className="mt-4 font-heading text-xl font-bold text-text">
+                        {service.title}
+                      </h3>
+                    </div>
 
-    <div className="shrink-0 text-right">
-      <p className="font-bengali text-xs text-text-muted">
-        মূল্য
-      </p>
+                    <div className="shrink-0 text-right">
+                      <p className="font-bengali text-xs text-text-muted">
+                        মূল্য
+                      </p>
 
-      <p className="mt-1 font-heading text-xl font-bold text-primary">
-        ৳{service.price}
-      </p>
-    </div>
-  </div>
+                      <p className="mt-1 font-heading text-xl font-bold text-primary">
+                        ৳{service.price}
+                      </p>
+                    </div>
+                  </div>
 
-  <p className="mt-4 flex-1 font-bengali text-sm leading-7 text-text-muted">
-    {service.description}
-  </p>
+                  <p className="mt-4 flex-1 font-bengali text-sm leading-7 text-text-muted">
+                    {service.description}
+                  </p>
 
-  <div className="mt-6 flex items-center gap-2 border-t border-border pt-4">
-    <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                  <div className="mt-6 flex items-center gap-2 border-t border-border pt-4">
+                    <MapPin className="h-4 w-4 shrink-0 text-primary" />
 
-    <span className="font-bengali text-sm text-text-muted">
-      {service.location}
-    </span>
-  </div>
+                    <span className="font-bengali text-sm text-text-muted">
+                      {service.location}
+                    </span>
+                  </div>
 
-  <button
-    type="button"
-    onClick={() => {
-      setSelectedService(service);
-    }}
-    className="mt-5 w-full rounded-xl bg-primary px-4 py-3 font-bengali text-sm font-semibold text-surface transition-colors hover:bg-primary-hover"
-  >
-    সেবা চাই
-  </button>
-</div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedService(service);
+                    }}
+                    className="mt-5 w-full rounded-xl bg-primary px-4 py-3 font-bengali text-sm font-semibold text-surface transition-colors hover:bg-primary-hover"
+                  >
+                    সেবা চাই
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Reviews */}
+        <div className="mt-12">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="font-heading text-2xl font-bold text-text">
+                Customer Reviews
+              </h2>
+
+              <p className="mt-1 font-bengali text-sm text-text-muted">
+                এই সেবাদাতার কাছ থেকে যারা সেবা নিয়েছেন,
+                তাদের অভিজ্ঞতা দেখুন।
+              </p>
+            </div>
+
+            {totalReviews > 0 && (
+              <div className="flex items-center gap-2">
+                {renderStars(
+                  Math.round(averageRating),
+                  17
+                )}
+
+                <span className="font-heading font-bold text-text">
+                  {averageRating}
+                </span>
+
+                <span className="font-bengali text-xs text-text-muted">
+                  ({totalReviews})
+                </span>
+              </div>
+            )}
+          </div>
+
+          {reviewsLoading ? (
+            <div className="mt-6 grid gap-4">
+              {[1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="animate-pulse rounded-2xl border border-border bg-surface p-5"
+                >
+                  <div className="h-5 w-36 rounded bg-border" />
+                  <div className="mt-3 h-4 w-28 rounded bg-border" />
+                  <div className="mt-4 h-12 w-full rounded bg-border" />
+                </div>
+              ))}
+            </div>
+          ) : reviewsError ? (
+            <div className="mt-6 rounded-2xl border border-danger/20 bg-danger/5 p-5">
+              <p className="font-bengali text-sm text-danger">
+                {reviewsError}
+              </p>
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-border bg-surface p-8 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                <Star size={23} />
+              </div>
+
+              <p className="mt-4 font-bengali text-sm font-semibold text-text">
+                এখনো কোনো review নেই
+              </p>
+
+              <p className="mt-1 font-bengali text-xs leading-6 text-text-muted">
+                এই সেবাদাতা সেবা দেওয়ার পর customer-দের
+                review এখানে দেখা যাবে।
+              </p>
+            </div>
+          ) : (
+            <div className="mt-6 grid gap-4">
+              {reviews.map((review) => (
+                <div
+                  key={review._id}
+                  className="rounded-2xl border border-border bg-surface p-5 shadow-sm"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <User size={18} />
+                      </div>
+
+                      <div>
+                        <p className="font-bengali text-sm font-semibold text-text">
+                          {review.userName ||
+                            "Customer"}
+                        </p>
+
+                        <p className="mt-0.5 font-bengali text-xs text-text-muted">
+                          Customer
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-start gap-1 sm:items-end">
+                      {renderStars(
+                        review.rating,
+                        17
+                      )}
+
+                      <p className="font-bengali text-xs text-text-muted">
+                        {formatReviewDate(
+                          review.createdAt
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {review.comment && (
+                    <div className="mt-4 border-t border-border pt-4">
+                      <p className="font-bengali text-sm leading-7 text-text">
+                        {review.comment}
+                      </p>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -244,75 +503,77 @@ setRequestMessage("");
       {/* Request Modal */}
       {selectedService && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
-    <div className="w-full max-w-lg rounded-2xl border border-border bg-surface shadow-xl">
-      <div className="flex items-start justify-between gap-4 border-b border-border p-6 sm:p-7">
-        <div>
-          <p className="font-bengali text-sm font-medium text-primary">
-            সেবা নেওয়ার অনুরোধ
-          </p>
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-surface shadow-xl">
+            <div className="flex items-start justify-between gap-4 border-b border-border p-6 sm:p-7">
+              <div>
+                <p className="font-bengali text-sm font-medium text-primary">
+                  সেবা নেওয়ার অনুরোধ
+                </p>
 
-          <h2 className="mt-1 font-heading text-2xl font-bold text-text">
-            সেবা চাই
-          </h2>
+                <h2 className="mt-1 font-heading text-2xl font-bold text-text">
+                  সেবা চাই
+                </h2>
 
-          <p className="mt-2 font-bengali text-sm text-text-muted">
-            {selectedService.title}
-          </p>
-        </div>
+                <p className="mt-2 font-bengali text-sm text-text-muted">
+                  {selectedService.title}
+                </p>
+              </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedService(null);
-            setRequestMessage("");
-          }}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-background hover:text-text"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedService(null);
+                  setRequestMessage("");
+                }}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-background hover:text-text"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-      <div className="p-6 sm:p-7">
-        <div className="rounded-xl bg-background p-4">
-          <div className="flex items-center justify-between gap-4">
-            <span className="font-bengali text-sm text-text-muted">
-              সেবার মূল্য
-            </span>
+            <div className="p-6 sm:p-7">
+              <div className="rounded-xl bg-background p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="font-bengali text-sm text-text-muted">
+                    সেবার মূল্য
+                  </span>
 
-            <span className="font-heading font-bold text-primary">
-              ৳{selectedService.price}
-            </span>
+                  <span className="font-heading font-bold text-primary">
+                    ৳{selectedService.price}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <label
+                  htmlFor="requestMessage"
+                  className="font-bengali text-sm font-semibold text-text"
+                >
+                  আপনার প্রয়োজন সম্পর্কে লিখুন
+                </label>
+
+                <textarea
+                  id="requestMessage"
+                  value={requestMessage}
+                  onChange={(e) =>
+                    setRequestMessage(e.target.value)
+                  }
+                  rows="5"
+                  placeholder="আপনার সমস্যাটি বিস্তারিত লিখুন..."
+                  className="mt-2 w-full resize-none rounded-xl border border-border bg-background px-4 py-3 font-bengali text-sm leading-7 text-text outline-none transition-colors placeholder:text-text-muted focus:border-primary"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleRequestSubmit}
+                className="mt-6 w-full rounded-xl bg-primary px-4 py-3.5 font-bengali font-semibold text-surface transition-colors hover:bg-primary-hover"
+              >
+                অনুরোধ পাঠান
+              </button>
+            </div>
           </div>
         </div>
-
-        <div className="mt-6">
-          <label
-            htmlFor="requestMessage"
-            className="font-bengali text-sm font-semibold text-text"
-          >
-            আপনার প্রয়োজন সম্পর্কে লিখুন
-          </label>
-
-          <textarea
-            id="requestMessage"
-            value={requestMessage}
-            onChange={(e) => setRequestMessage(e.target.value)}
-            rows="5"
-            placeholder="আপনার সমস্যাটি বিস্তারিত লিখুন..."
-            className="mt-2 w-full resize-none rounded-xl border border-border bg-background px-4 py-3 font-bengali text-sm leading-7 text-text outline-none transition-colors placeholder:text-text-muted focus:border-primary"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleRequestSubmit}
-          className="mt-6 w-full rounded-xl bg-primary px-4 py-3.5 font-bengali font-semibold text-surface transition-colors hover:bg-primary-hover"
-        >
-          অনুরোধ পাঠান
-        </button>
-      </div>
-    </div>
-  </div>
       )}
     </section>
   );
