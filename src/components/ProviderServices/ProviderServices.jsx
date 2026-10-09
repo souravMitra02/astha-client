@@ -6,9 +6,10 @@ import {
   Wrench,
   X,
   Loader2,
+  Power,
 } from "lucide-react";
 import Swal from "sweetalert2";
-
+import { toast } from "react-toastify";
 import {
   createService,
   getMyServices,
@@ -64,6 +65,8 @@ const ProviderServices = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [updatingAvailabilityId, setUpdatingAvailabilityId] =
+    useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
@@ -195,6 +198,56 @@ const ProviderServices = () => {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleAvailabilityToggle = async (service) => {
+    const newAvailability = !service.available;
+
+    try {
+      setUpdatingAvailabilityId(service._id);
+
+      const serviceData = {
+        title: service.title,
+        category: service.category,
+        description: service.description,
+        price: Number(service.price),
+        location: service.location,
+        latitude: Number(service.latitude),
+        longitude: Number(service.longitude),
+        available: newAvailability,
+      };
+
+      await updateService(service._id, serviceData);
+
+      setServices((prev) =>
+        prev.map((item) =>
+          item._id === service._id
+            ? {
+                ...item,
+                available: newAvailability,
+              }
+            : item
+        )
+      );
+
+     toast.success(
+  newAvailability
+    ? "সেবা চালু করা হয়েছে"
+    : "সেবা বন্ধ করা হয়েছে"
+);
+    } catch (error) {
+      console.error(
+        "Update service availability error:",
+        error
+      );
+
+      toast.error(
+  error.response?.data?.message ||
+    "সেবার availability পরিবর্তন করা যায়নি।"
+);
+    } finally {
+      setUpdatingAvailabilityId(null);
     }
   };
 
@@ -330,18 +383,6 @@ const ProviderServices = () => {
                       </p>
                     </div>
                   </div>
-
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 font-bengali text-[11px] font-semibold ${
-                      service.available
-                        ? "bg-success/10 text-success"
-                        : "bg-danger/10 text-danger"
-                    }`}
-                  >
-                    {service.available
-                      ? "সক্রিয়"
-                      : "বন্ধ"}
-                  </span>
                 </div>
 
                 <p className="mt-4 line-clamp-3 font-bengali text-sm leading-6 text-text-muted">
@@ -363,6 +404,41 @@ const ProviderServices = () => {
                     <button
                       type="button"
                       onClick={() =>
+                        handleAvailabilityToggle(service)
+                      }
+                      disabled={
+                        updatingAvailabilityId ===
+                        service._id
+                      }
+                      className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 font-bengali text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                        service.available
+                          ? "border-success/20 bg-success/5 text-success hover:bg-success/10"
+                          : "border-danger/20 bg-danger/5 text-danger hover:bg-danger/10"
+                      }`}
+                      title={
+                        service.available
+                          ? "সেবা বন্ধ করুন"
+                          : "সেবা চালু করুন"
+                      }
+                    >
+                      {updatingAvailabilityId ===
+                      service._id ? (
+                        <Loader2
+                          size={15}
+                          className="animate-spin"
+                        />
+                      ) : (
+                        <Power size={15} />
+                      )}
+
+                      {service.available
+                        ? "সক্রিয়"
+                        : "বন্ধ"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
                         openEditModal(service)
                       }
                       className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text-muted transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
@@ -374,7 +450,9 @@ const ProviderServices = () => {
                     <button
                       type="button"
                       disabled={
-                        deletingId === service._id
+                        deletingId === service._id ||
+                        updatingAvailabilityId ===
+                          service._id
                       }
                       onClick={() =>
                         handleDelete(service)
@@ -451,26 +529,26 @@ const ProviderServices = () => {
                     ক্যাটাগরি
                   </label>
 
-                 <select
-  name="category"
-  value={formData.category}
-  onChange={handleChange}
-  required
-  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 font-bengali text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
->
-  <option value="">
-    ক্যাটাগরি নির্বাচন করুন
-  </option>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    required
+                    className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 font-bengali text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                  >
+                    <option value="">
+                      ক্যাটাগরি নির্বাচন করুন
+                    </option>
 
-  {categories.map((category) => (
-    <option
-      key={category.value}
-      value={category.value}
-    >
-      {category.label}
-    </option>
-  ))}
-</select>
+                    {categories.map((category) => (
+                      <option
+                        key={category.value}
+                        value={category.value}
+                      >
+                        {category.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -572,7 +650,8 @@ const ProviderServices = () => {
                       </p>
 
                       <p className="mt-0.5 font-bengali text-xs text-text-muted">
-                        বন্ধ করলে গ্রাহকরা এই সেবাটি available হিসেবে দেখতে পাবে না।
+                        বন্ধ করলে গ্রাহকরা এই সেবাটি
+                        available হিসেবে দেখতে পাবে না।
                       </p>
                     </div>
                   </label>
