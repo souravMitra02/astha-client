@@ -4,6 +4,7 @@ import {
   ArrowRight,
   MapPin,
   Search,
+  Star,
   Wrench,
 } from "lucide-react";
 import { getAllServices } from "../../services/serviceService";
@@ -20,6 +21,7 @@ const categoryLabels = {
 const categoryButtons = [
   { value: "all", label: "সব সেবা" },
   { value: "electrician", label: "ইলেকট্রিশিয়ান" },
+  { value: "electrical", label: "ইলেকট্রিক্যাল" },
   { value: "plumber", label: "প্লাম্বার" },
   { value: "ac-service", label: "AC সার্ভিস" },
   { value: "cleaning", label: "ক্লিনিং" },
@@ -31,6 +33,9 @@ const Services = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [sortBy, setSortBy] = useState("default");
+  const [availableOnly, setAvailableOnly] = useState(false);
 
   useEffect(() => {
     const loadServices = async () => {
@@ -47,21 +52,54 @@ const Services = () => {
     loadServices();
   }, []);
 
-  const filteredServices = services.filter((service) => {
-    const search = searchTerm.trim().toLowerCase();
+  const filteredServices = services
+    .filter((service) => {
+      const search = searchTerm.trim().toLowerCase();
+      const location = selectedLocation.trim().toLowerCase();
 
-    const matchesSearch =
-      !search ||
-      service.title?.toLowerCase().includes(search) ||
-      service.description?.toLowerCase().includes(search) ||
-      service.location?.toLowerCase().includes(search);
+      const matchesSearch =
+        !search ||
+        service.title?.toLowerCase().includes(search) ||
+        service.description?.toLowerCase().includes(search) ||
+        service.location?.toLowerCase().includes(search);
 
-    const matchesCategory =
-      selectedCategory === "all" ||
-      service.category === selectedCategory;
+      const matchesCategory =
+        selectedCategory === "all" ||
+        service.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
-  });
+      const matchesLocation =
+        !location ||
+        service.location?.toLowerCase().includes(location);
+
+      const matchesAvailability =
+        !availableOnly || service.available !== false;
+
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesLocation &&
+        matchesAvailability
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === "rating") {
+        return (b.averageRating || 0) - (a.averageRating || 0);
+      }
+
+      if (sortBy === "reviews") {
+        return (b.totalReviews || 0) - (a.totalReviews || 0);
+      }
+
+      if (sortBy === "price-low") {
+        return (a.price || 0) - (b.price || 0);
+      }
+
+      if (sortBy === "price-high") {
+        return (b.price || 0) - (a.price || 0);
+      }
+
+      return 0;
+    });
 
   return (
     <main className="min-h-screen bg-background">
@@ -83,25 +121,69 @@ const Services = () => {
           </p>
         </section>
 
-        {/* Search & Filter */}
+        {/* Search & Filters */}
         <section className="mt-10 rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative w-full lg:max-w-sm">
-              <Search
-                size={19}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
-              />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Search */}
+            <div>
+              <label
+                htmlFor="service-search"
+                className="mb-2 block font-bengali text-sm font-medium text-text"
+              >
+                সেবা খুঁজুন
+              </label>
 
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="সেবা খুঁজুন..."
-                className="w-full rounded-xl border border-border bg-background py-3 pl-11 pr-4 font-bengali text-sm text-text outline-none transition focus:border-primary"
-              />
+              <div className="relative">
+                <Search
+                  size={19}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
+                />
+
+                <input
+                  id="service-search"
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="সেবার নাম বা বিবরণ লিখুন..."
+                  className="w-full rounded-xl border border-border bg-background py-3 pl-11 pr-4 font-bengali text-sm text-text outline-none transition focus:border-primary"
+                />
+              </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            {/* Location */}
+            <div>
+              <label
+                htmlFor="service-location"
+                className="mb-2 block font-bengali text-sm font-medium text-text"
+              >
+                লোকেশন অনুযায়ী খুঁজুন
+              </label>
+
+              <div className="relative">
+                <MapPin
+                  size={19}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
+                />
+
+                <input
+                  id="service-location"
+                  type="text"
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  placeholder="যেমন: বরিশাল সদর"
+                  className="w-full rounded-xl border border-border bg-background py-3 pl-11 pr-4 font-bengali text-sm text-text outline-none transition focus:border-primary"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Category Buttons */}
+          <div className="mt-5">
+            <p className="mb-3 font-bengali text-sm font-medium text-text">
+              ক্যাটাগরি
+            </p>
+
+            <div className="flex gap-2 overflow-x-auto pb-2">
               {categoryButtons.map((category) => (
                 <button
                   key={category.value}
@@ -118,10 +200,45 @@ const Services = () => {
               ))}
             </div>
           </div>
+
+          {/* Sorting & Availability */}
+          <div className="mt-5 flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="w-full sm:max-w-xs">
+              <label
+                htmlFor="service-sort"
+                className="mb-2 block font-bengali text-sm font-medium text-text"
+              >
+                সেবা সাজান
+              </label>
+
+              <select
+                id="service-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 font-bengali text-sm text-text outline-none transition focus:border-primary"
+              >
+                <option value="default">ডিফল্ট</option>
+                <option value="rating">সর্বোচ্চ রেটিং</option>
+                <option value="reviews">সবচেয়ে বেশি রিভিউ</option>
+                <option value="price-low">দাম: কম থেকে বেশি</option>
+                <option value="price-high">দাম: বেশি থেকে কম</option>
+              </select>
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-2 font-bengali text-sm text-text">
+              <input
+                type="checkbox"
+                checked={availableOnly}
+                onChange={(e) => setAvailableOnly(e.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+              শুধু চালু সেবা দেখান
+            </label>
+          </div>
         </section>
 
-        {/* Result count */}
-        <div className="mt-8 flex items-center justify-between">
+        {/* Result Count */}
+        <div className="mt-8 flex items-center justify-between gap-3">
           <div>
             <h2 className="font-heading text-2xl font-bold text-text">
               {selectedCategory === "all"
@@ -130,11 +247,11 @@ const Services = () => {
             </h2>
 
             <p className="mt-1 font-bengali text-sm text-text-muted">
-              আপনার কাছাকাছি প্রয়োজনীয় সেবা খুঁজে নিন
+              আপনার প্রয়োজন অনুযায়ী সেবা বেছে নিন।
             </p>
           </div>
 
-          <span className="hidden rounded-full bg-primary/10 px-3 py-1.5 font-bengali text-sm font-semibold text-primary sm:block">
+          <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1.5 font-bengali text-sm font-semibold text-primary">
             {filteredServices.length}টি সেবা
           </span>
         </div>
@@ -148,26 +265,21 @@ const Services = () => {
                 className="animate-pulse rounded-2xl border border-border bg-surface p-6"
               >
                 <div className="h-12 w-12 rounded-xl bg-background" />
-
                 <div className="mt-5 h-5 w-40 rounded bg-background" />
-
                 <div className="mt-3 h-4 w-24 rounded bg-background" />
-
                 <div className="mt-5 h-4 w-full rounded bg-background" />
-
                 <div className="mt-2 h-4 w-3/4 rounded bg-background" />
-
                 <div className="mt-6 h-10 w-full rounded-xl bg-background" />
               </div>
             ))}
           </div>
         )}
 
-        {/* Empty */}
+        {/* Empty State */}
         {!loading && filteredServices.length === 0 && (
           <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface px-6 py-16 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-background text-text-muted">
-              <Wrench size={28} />
+              <Search size={28} />
             </div>
 
             <h3 className="mt-5 font-heading text-xl font-bold text-text">
@@ -175,8 +287,22 @@ const Services = () => {
             </h3>
 
             <p className="mt-2 font-bengali text-sm text-text-muted">
-              আপনার অনুসন্ধানের সাথে মিলে এমন কোনো সেবা পাওয়া যায়নি।
+              অন্য নাম, লোকেশন অথবা ক্যাটাগরি দিয়ে খুঁজে দেখুন।
             </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedLocation("");
+                setSelectedCategory("all");
+                setSortBy("default");
+                setAvailableOnly(false);
+              }}
+              className="mt-5 rounded-xl bg-primary px-5 py-3 font-bengali text-sm font-semibold text-surface transition hover:bg-primary-hover"
+            >
+              ফিল্টার রিসেট করুন
+            </button>
           </div>
         )}
 
@@ -188,27 +314,28 @@ const Services = () => {
                 key={service._id}
                 className="group flex flex-col rounded-2xl border border-border bg-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-6"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-surface">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-surface">
                     <Wrench size={22} />
                   </div>
 
-                  
-<div className="flex flex-col items-end gap-2">
-  <span className="rounded-full bg-background px-3 py-1.5 font-bengali text-xs font-semibold text-text-muted">
-    {categoryLabels[service.category] || service.category}
-  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="rounded-full bg-background px-3 py-1.5 font-bengali text-xs font-semibold text-text-muted">
+                      {categoryLabels[service.category] || service.category}
+                    </span>
 
-  <span
-    className={`rounded-full px-3 py-1 font-bengali text-xs font-semibold ${
-      service.available === false
-        ? "bg-danger/10 text-danger"
-        : "bg-success/10 text-success"
-    }`}
-  >
-    {service.available === false ? "সেবা বন্ধ" : "সেবা চালু"}
-  </span>
-</div>
+                    <span
+                      className={`rounded-full px-3 py-1 font-bengali text-xs font-semibold ${
+                        service.available === false
+                          ? "bg-danger/10 text-danger"
+                          : "bg-success/10 text-success"
+                      }`}
+                    >
+                      {service.available === false
+                        ? "সেবা বন্ধ"
+                        : "সেবা চালু"}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="mt-5">
@@ -221,7 +348,23 @@ const Services = () => {
                   </p>
                 </div>
 
-                <div className="mt-5 flex items-center justify-between border-t border-border pt-5">
+                {/* Rating */}
+                <div className="mt-4 flex items-center gap-2 font-bengali text-sm">
+                  <Star
+                    size={17}
+                    className="fill-amber-400 text-amber-400"
+                  />
+
+                  <span className="font-semibold text-text">
+                    {Number(service.averageRating || 0).toFixed(1)}
+                  </span>
+
+                  <span className="text-text-muted">
+                    ({service.totalReviews || 0}টি রিভিউ)
+                  </span>
+                </div>
+
+                <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-5">
                   <div>
                     <p className="font-bengali text-xs text-text-muted">
                       সেবার মূল্য
@@ -232,9 +375,9 @@ const Services = () => {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1.5 font-bengali text-sm text-text-muted">
-                    <MapPin size={16} />
-                    <span>{service.location}</span>
+                  <div className="flex min-w-0 items-center gap-1.5 font-bengali text-sm text-text-muted">
+                    <MapPin size={16} className="shrink-0" />
+                    <span className="break-words">{service.location}</span>
                   </div>
                 </div>
 
