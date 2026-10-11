@@ -193,9 +193,22 @@ const Services = () => {
                     <Wrench size={22} />
                   </div>
 
-                  <span className="rounded-full bg-background px-3 py-1.5 font-bengali text-xs font-semibold text-text-muted">
-                    {categoryLabels[service.category] || service.category}
-                  </span>
+                  
+<div className="flex flex-col items-end gap-2">
+  <span className="rounded-full bg-background px-3 py-1.5 font-bengali text-xs font-semibold text-text-muted">
+    {categoryLabels[service.category] || service.category}
+  </span>
+
+  <span
+    className={`rounded-full px-3 py-1 font-bengali text-xs font-semibold ${
+      service.available === false
+        ? "bg-danger/10 text-danger"
+        : "bg-success/10 text-success"
+    }`}
+  >
+    {service.available === false ? "সেবা বন্ধ" : "সেবা চালু"}
+  </span>
+</div>
                 </div>
 
                 <div className="mt-5">

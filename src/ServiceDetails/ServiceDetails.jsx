@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getSingleService } from "../services/serviceService";
@@ -16,17 +17,19 @@ const ServiceDetails = () => {
   const { id } = useParams();
 
   const [service, setService] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [showRequestForm, setShowRequestForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showRequestForm, setShowRequestForm] = useState(false);
 
   useEffect(() => {
     const loadService = async () => {
       try {
-        const data = await getSingleService(id);
+        setLoading(true);
 
+        const data = await getSingleService(id);
         setService(data.service);
       } catch (error) {
         console.error("Service details load error:", error);
+        setService(null);
       } finally {
         setLoading(false);
       }
@@ -58,6 +61,8 @@ const ServiceDetails = () => {
       </main>
     );
   }
+
+  const isAvailable = service.available !== false;
 
   return (
     <main className="min-h-screen bg-background">
@@ -113,12 +118,10 @@ const ServiceDetails = () => {
 
               <p
                 className={`mt-1 font-bengali font-semibold ${
-                  service.available
-                    ? "text-success"
-                    : "text-danger"
+                  isAvailable ? "text-success" : "text-danger"
                 }`}
               >
-                {service.available
+                {isAvailable
                   ? "সেবা পাওয়া যাচ্ছে"
                   : "সেবা বর্তমানে বন্ধ"}
               </p>
@@ -126,15 +129,18 @@ const ServiceDetails = () => {
           </div>
 
           <button
-                      type="button"
-                      onClick={() => setShowRequestForm(true)}
-            className="mt-8 w-full rounded-xl bg-primary px-5 py-3.5 font-bengali font-semibold text-surface transition hover:bg-primary-hover"
+            type="button"
+            onClick={() => setShowRequestForm(true)}
+            disabled={!isAvailable}
+            className="mt-8 w-full rounded-xl bg-primary px-5 py-3.5 font-bengali font-semibold text-surface transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-background disabled:text-text-muted disabled:hover:bg-background"
           >
-            সেবা নিন
-                  </button>
+            {isAvailable ? "সেবা নিন" : "সেবা বর্তমানে বন্ধ"}
+          </button>
         </div>
 
-       {showRequestForm && <RequestForm service={service} />}
+        {showRequestForm && isAvailable && (
+          <RequestForm service={service} />
+        )}
       </div>
     </main>
   );
