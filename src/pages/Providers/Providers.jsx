@@ -4,12 +4,14 @@ import {
   BriefcaseBusiness,
   Phone,
   Search,
+  Star,
   UserRound,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const categoryLabels = {
   electrician: "ইলেকট্রিশিয়ান",
+  electrical: "ইলেকট্রিক্যাল",
   plumber: "প্লাম্বার",
   "ac-service": "এসি সার্ভিস",
   cleaning: "ক্লিনিং সার্ভিস",
@@ -19,6 +21,7 @@ const categoryLabels = {
 const categoryButtons = [
   { value: "all", label: "সব সেবাদাতা" },
   { value: "electrician", label: "ইলেকট্রিশিয়ান" },
+  { value: "electrical", label: "ইলেকট্রিক্যাল" },
   { value: "plumber", label: "প্লাম্বার" },
   { value: "ac-service", label: "এসি সার্ভিস" },
   { value: "cleaning", label: "ক্লিনিং সার্ভিস" },
@@ -31,6 +34,7 @@ const Providers = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("default");
 
   useEffect(() => {
     const getProviders = async () => {
@@ -51,20 +55,33 @@ const Providers = () => {
     getProviders();
   }, []);
 
-  const filteredProviders = providers.filter((provider) => {
-    const search = searchTerm.trim().toLowerCase();
+  const filteredProviders = providers
+    .filter((provider) => {
+      const search = searchTerm.trim().toLowerCase();
 
-    const matchesSearch =
-      !search ||
-      provider.name?.toLowerCase().includes(search) ||
-      provider.phone?.toLowerCase().includes(search);
+      const matchesSearch =
+        !search ||
+        provider.name?.toLowerCase().includes(search) ||
+        provider.phone?.toLowerCase().includes(search) ||
+        provider.category?.toLowerCase().includes(search);
 
-    const matchesCategory =
-      selectedCategory === "all" ||
-      provider.category === selectedCategory;
+      const matchesCategory =
+        selectedCategory === "all" ||
+        provider.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
-  });
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortBy === "rating") {
+        return (b.averageRating || 0) - (a.averageRating || 0);
+      }
+
+      if (sortBy === "reviews") {
+        return (b.totalReviews || 0) - (a.totalReviews || 0);
+      }
+
+      return 0;
+    });
 
   return (
     <section className="min-h-screen bg-background py-12">
@@ -94,7 +111,8 @@ const Providers = () => {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="সেবাদাতা খুঁজুন..."
+                  placeholder="নাম, ফোন বা ক্যাটাগরি দিয়ে খুঁজুন..."
+                  aria-label="সেবাদাতা খুঁজুন"
                   className="w-full rounded-xl border border-border bg-background py-3 pl-11 pr-4 font-bengali text-sm text-text outline-none transition focus:border-primary"
                 />
               </div>
@@ -105,6 +123,7 @@ const Providers = () => {
                     key={category.value}
                     type="button"
                     onClick={() => setSelectedCategory(category.value)}
+                    aria-pressed={selectedCategory === category.value}
                     className={`shrink-0 rounded-xl px-4 py-2.5 font-bengali text-sm font-semibold transition ${
                       selectedCategory === category.value
                         ? "bg-primary text-surface"
@@ -116,12 +135,33 @@ const Providers = () => {
                 ))}
               </div>
             </div>
+
+            {/* Sorting */}
+            <div className="mt-4 border-t border-border pt-4">
+              <label
+                htmlFor="provider-sort"
+                className="mb-2 block font-bengali text-sm font-medium text-text"
+              >
+                সেবাদাতা সাজান
+              </label>
+
+              <select
+                id="provider-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 font-bengali text-sm text-text outline-none transition focus:border-primary sm:w-72"
+              >
+                <option value="default">ডিফল্ট</option>
+                <option value="rating">সর্বোচ্চ রেটিং</option>
+                <option value="reviews">সবচেয়ে বেশি রিভিউ</option>
+              </select>
+            </div>
           </section>
         )}
 
         {/* Result Header */}
         {!loading && !error && providers.length > 0 && (
-          <div className="mt-8 flex items-center justify-between">
+          <div className="mt-8 flex items-center justify-between gap-4">
             <div>
               <h2 className="font-heading text-2xl font-bold text-text">
                 {selectedCategory === "all"
@@ -134,7 +174,7 @@ const Providers = () => {
               </p>
             </div>
 
-            <span className="hidden rounded-full bg-primary/10 px-3 py-1.5 font-bengali text-sm font-semibold text-primary sm:block">
+            <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1.5 font-bengali text-sm font-semibold text-primary">
               {filteredProviders.length} জন
             </span>
           </div>
@@ -179,21 +219,36 @@ const Providers = () => {
         )}
 
         {/* No Filter Results */}
-        {!loading && !error && providers.length > 0 && filteredProviders.length === 0 && (
-          <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface px-6 py-16 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-background text-text-muted">
-              <UserRound size={28} />
+        {!loading &&
+          !error &&
+          providers.length > 0 &&
+          filteredProviders.length === 0 && (
+            <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface px-6 py-16 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-background text-text-muted">
+                <UserRound size={28} />
+              </div>
+
+              <h3 className="mt-5 font-heading text-xl font-bold text-text">
+                কোনো সেবাদাতা পাওয়া যায়নি
+              </h3>
+
+              <p className="mt-2 font-bengali text-sm text-text-muted">
+                আপনার অনুসন্ধানের সাথে মিলে এমন কোনো সেবাদাতা পাওয়া যায়নি।
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedCategory("all");
+                  setSortBy("default");
+                }}
+                className="mt-5 rounded-lg bg-primary px-5 py-2.5 font-bengali text-sm font-semibold text-surface transition hover:bg-primary-hover"
+              >
+                ফিল্টার রিসেট করুন
+              </button>
             </div>
-
-            <h3 className="mt-5 font-heading text-xl font-bold text-text">
-              কোনো সেবাদাতা পাওয়া যায়নি
-            </h3>
-
-            <p className="mt-2 font-bengali text-sm text-text-muted">
-              আপনার অনুসন্ধানের সাথে মিলে এমন কোনো সেবাদাতা পাওয়া যায়নি।
-            </p>
-          </div>
-        )}
+          )}
 
         {/* Provider Cards */}
         {!loading && !error && filteredProviders.length > 0 && (
@@ -223,11 +278,28 @@ const Providers = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 flex items-center gap-2 border-t border-border pt-4">
-                  <Phone className="h-4 w-4 text-primary" />
+                {/* Rating & Reviews */}
+                <div className="mt-4 flex items-center gap-2 font-bengali text-sm">
+                  <Star
+                    size={16}
+                    className="shrink-0 fill-amber-400 text-amber-400"
+                  />
+
+                  <span className="font-semibold text-text">
+                    {Number(provider.averageRating || 0).toFixed(1)}
+                  </span>
+
+                  <span className="text-text-muted">
+                    ({provider.totalReviews || 0}টি রিভিউ)
+                  </span>
+                </div>
+
+                {/* Phone */}
+                <div className="mt-5 flex items-center gap-2 border-t border-border pt-4">
+                  <Phone className="h-4 w-4 shrink-0 text-primary" />
 
                   <span className="font-bengali text-sm text-text-muted">
-                    {provider.phone}
+                    {provider.phone || "ফোন নম্বর দেওয়া নেই"}
                   </span>
                 </div>
 
